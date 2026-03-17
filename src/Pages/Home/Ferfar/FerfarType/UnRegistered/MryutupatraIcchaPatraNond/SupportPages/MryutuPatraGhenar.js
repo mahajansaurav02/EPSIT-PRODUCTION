@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Dialog,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   IconButton,
   InputLabel,
   MenuItem,
   Paper,
+  Radio,
+  RadioGroup,
   Select,
   Table,
   TableBody,
@@ -16,8 +19,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Typography,
 } from "@mui/material";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
+import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 import UserNoMHProperty from "../../SupportPages/User/NoMHProperty/UserNoMHProperty";
 import UserMHPropertyType712 from "../../SupportPages//User/MHProperty/UserMHPropertyType712";
 import UserMHPropertyTypePropertyCard from "../../SupportPages//User/MHProperty/UserMHPropertyTypePropertyCard";
@@ -27,9 +33,8 @@ import CompanyMHPropertType712 from "../../SupportPages/Company/MHProperty/Compa
 import CompanyMHPropertyTypePropertyCard from "../../SupportPages/Company/MHProperty/CompanyMHPropertyTypePropertyCard";
 import CompanyMHPropertyTypeULPIN from "../../SupportPages/Company/MHProperty/CompanyMHPropertyTypeULPIN";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import RotateRightRoundedIcon from "@mui/icons-material/RotateRightRounded";
-import CloseIcon from "@mui/icons-material/Close";
+import AxiosInstance from "../../../../../../../Instance/AxiosInstance";
 import UserAddress from "../../SupportPages/UserAddress";
 import UserDharak from "./UserDharak";
 import CompanyDharak from "./CompanyDharak";
@@ -39,16 +44,12 @@ import {
   Toast,
   warningToast,
 } from "../../../../../../../ui/Toast";
-import AxiosInstance from "../../../../../../../Instance/AxiosInstance";
 import URLS from "../../../../../../../URLs/url";
 import NotesPaper from "../../../../../../../ui/NotesPaper/NotesPaper";
-import {
-  bhadePattaGhenarNotesArr,
-  mryutupatraGhenarNotesArrRegistered,
-} from "../../../../../../../NotesArray/NotesArray";
+import { mryutupatraGhenarNotesArrUnRegistered } from "../../../../../../../NotesArray/NotesArray";
 import ShowAddress from "../../SupportPages/ShowAddress";
 
-const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
+const MryutuPatraGhenar = ({ applicationData }) => {
   const applicationId = sessionStorage.getItem("applicationId");
   const { sendRequest } = AxiosInstance();
   const [giver, setGiverData] = useState([]);
@@ -182,9 +183,11 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
     dob: "",
     motherName: "",
     motherNameEng: "",
+    landBuyArea: "NA",
   });
   const [companyDharak, setCompanyDharak] = useState({
     holderType: {},
+    landBuyArea: "NA",
   });
   const [isIndian, setIsIndian] = useState("india");
   const [indiaAddress, setIndiaAdress] = useState({
@@ -304,10 +307,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserNoMhProperty && isUserIndAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -334,9 +336,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -354,10 +357,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserNoMhProperty && isUserForeignAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -385,9 +387,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -410,10 +413,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserProp712 && isUserIndAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -440,9 +442,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -465,10 +468,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserProp712 && isUserForeignAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -495,9 +497,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -520,10 +523,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserPropertyCard && isUserIndAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -550,9 +552,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -575,10 +578,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserPropertyCard && isUserForeignAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -607,9 +609,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -632,10 +635,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserPropULPIN && isUserIndAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -662,9 +664,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -687,10 +690,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isUserPropULPIN && isUserForeignAdd && isUserDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -717,9 +719,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -736,10 +739,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
       const isCompanyDharak = await isValid.triggerCompanyDharak();
       if (isCompNoMhProperty && isUserIndAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -766,9 +768,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -785,10 +788,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
       const isCompanyDharak = await isValid.triggerCompanyDharak();
       if (isCompNoMhProperty && isUserForeignAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -815,9 +817,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -840,10 +843,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isCompProp712 && isUserIndAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}//MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -870,9 +872,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -895,10 +898,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isCompProp712 && isUserForeignAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}//MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -925,9 +927,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -950,10 +953,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isCompPropertryCard && isUserIndAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}//MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -980,9 +982,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -1005,10 +1008,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isCompPropertryCard && isUserForeignAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}//MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -1036,9 +1038,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -1061,10 +1064,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isCompPropULPIN && isUserIndAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}//MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -1091,9 +1093,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -1116,10 +1119,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       if (isCompPropULPIN && isUserForeignAdd && isCompanyDharak) {
         sendRequest(
-          `${URLS?.BaseURL}//MutationAPIS/CreateBhadepattaNondTaker`,
+          `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForTaker`,
           "POST",
           {
-            giver: giver,
             usertype: userTypeLabel,
             usertype_code: userType,
             applicationid: applicationId,
@@ -1146,9 +1148,10 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
           (res) => {
             if (res?.Code == "1") {
               successToast(res?.Message);
-              getBhadePattaGhenarTableData();
+              getMrututPatraGhenarTableData();
               handleReset();
             } else {
+              console.error(res?.Message);
               errorToast(res?.Message);
             }
           },
@@ -1164,7 +1167,7 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
   };
   const handleDelete = (id) => {
     sendRequest(
-      `${URLS?.BaseURL}/MutationAPIS/DeleteBhadepattaTaker`,
+      `${URLS?.BaseURL}/MutationAPIS/DeleteMrutyuPatraInfoForTaker`,
       "POST",
       {
         mutationId: id,
@@ -1173,7 +1176,7 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
       (res) => {
         if (res?.Code == "1") {
           successToast(res?.Message);
-          getBhadePattaGhenarTableData();
+          getMrututPatraGhenarTableData();
         } else {
           errorToast(res?.Message);
         }
@@ -1347,35 +1350,9 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
     setIsReset(!isReset);
     setIsMobileNoVerified(false);
   };
-
-  const getBhadepattaDenarTableData = () => {
+  const getMrututPatraGhenarTableData = () => {
     sendRequest(
-      `${URLS?.BaseURL}/MutationAPIS/GetBhadepattaGiverData`,
-      "POST",
-      applicationId,
-      (res) => {
-        if (res?.Code == "1") {
-          const data = res?.ResponseData;
-          const result = data.map(
-            ({ mutation_givertaker_id, userDetails, cts_number }) => ({
-              mutation_dtl_id: mutation_givertaker_id,
-              nabhu: cts_number,
-              subPropNo: userDetails?.subPropNo,
-            })
-          );
-          setGiverData(result);
-        } else {
-          errorToast(res?.Message);
-        }
-      },
-      (err) => {
-        errorToast(err?.Message);
-      }
-    );
-  };
-  const getBhadePattaGhenarTableData = () => {
-    sendRequest(
-      `${URLS?.BaseURL}/MutationAPIS/GetBhadepattaTakerData`,
+      `${URLS?.BaseURL}/MutationAPIS/GetMrutyuPatraInfoForTaker`,
       "POST",
       applicationId,
       (res) => {
@@ -1409,17 +1386,18 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
     );
   };
   useEffect(() => {
-    getBhadepattaDenarTableData();
-    getBhadePattaGhenarTableData();
+    getMrututPatraGhenarTableData();
     setIntialUserType();
   }, []);
 
-  // useEffect(() => {
-  //   if (responseData.length > 0) {
-  //     sessionStorage.setItem("allowPoa", "yes");
-  //     window.dispatchEvent(new Event("storage"));
-  //   }
-  // }, [responseData]);
+  useEffect(() => {
+    if (responseData.length > 0) {
+      sessionStorage.setItem("allowPoa", "yes");
+      window.dispatchEvent(new Event("storage"));
+    } else {
+      sessionStorage.setItem("allowPoa", "no");
+    }
+  }, [responseData]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1450,15 +1428,15 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       <Grid item md={12}>
         <NotesPaper
-          heading="भाडेपट्टा घेणारा माहिती भरण्यासाठी आवश्यक सूचना"
-          arr={bhadePattaGhenarNotesArr}
+          heading="मृत्यूपत्र / इच्छापत्र लाभार्थी माहिती भरण्यासाठी आवश्यक सूचना"
+          arr={mryutupatraGhenarNotesArrUnRegistered}
         />
       </Grid>
 
       <Paper elevation={5} sx={{ p: 2, mt: 2 }} className="papermain">
         <Grid container spacing={2}>
           <Grid item md={12}>
-            <h4 className="heading">भाडेपट्टा घेणार (पट्टेदार)</h4>
+            <h4 className="heading">मृत्यूपत्र / इच्छापत्र लाभार्थी</h4>
           </Grid>
 
           <Grid item md={12}>
@@ -1467,24 +1445,24 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                 <Grid container spacing={2}>
                   <Grid item md={12}>
                     <Grid container spacing={2}>
-                      <Grid item md={2}>
+                      <Grid item md={3}>
                         <InputLabel className="inputlabel">
-                          <b>भाडेपट्टा घेणाराचा प्रकार </b>
+                          <b>मृत्यूपत्र / इच्छापत्र लाभार्थीचा प्रकार </b>
                           <span>*</span>
                         </InputLabel>
                         <Select
                           value={userType}
                           onChange={handleChangeUserType}
+                          className="textfield"
                           fullWidth
                           size="small"
-                          className="textfield"
                         >
                           {Array.isArray(userTypeArr) &&
                             userTypeArr.map((val, i) => {
                               return (
                                 <MenuItem
-                                  key={i}
                                   value={val?.applicant_category_code}
+                                  key={i}
                                 >
                                   {val?.applicant_category_type}
                                 </MenuItem>
@@ -1492,8 +1470,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                             })}
                         </Select>
                       </Grid>
-                      {/* <Grid item md={4}>
-                        <InputLabel className={styles.inputlabel}>
+                      {/* <Grid item md={3}>
+                        <InputLabel className="inputlabel">
                           <b>आपल्या नावे महाराष्ट्रात मिळकत आहे का ? </b>
                           <span>*</span>
                         </InputLabel>
@@ -1513,18 +1491,42 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                             label="नाही"
                           />
                         </RadioGroup>
-                      </Grid> */}
-
-                      {/* {isMHProperty == "yes" && (
-                        <Grid item md={4}>
-                          <InputLabel className={styles.inputlabel}>
+                      </Grid>
+                      {isMHProperty == "yes" && (
+                        <Grid item md={3}>
+                          <InputLabel className="inputlabel">
+                            <b>आपणास ULPIN माहीत आहे का ? </b>
+                            <span>*</span>
+                          </InputLabel>
+                          <RadioGroup
+                            row
+                            value={isULPIN}
+                            onChange={handleIsULPIN}
+                          >
+                            <FormControlLabel
+                              value="yes"
+                              control={<Radio />}
+                              label="होय"
+                            />
+                            <FormControlLabel
+                              value="no"
+                              control={<Radio />}
+                              label="नाही"
+                            />
+                          </RadioGroup>
+                        </Grid>
+                      )}
+                      {isMHProperty == "yes" && isULPIN == "no" && (
+                        <Grid item md={3}>
+                          <InputLabel className="inputlabel">
                             <b>मालमत्ता प्रकार निवडा </b>
                             <span>*</span>
                           </InputLabel>
                           <RadioGroup
                             row
+                            sx={{ flexWrap: "nowrap" }}
                             value={property}
-                            onChange={handleProperty}
+                            onChange={handlePropertyType}
                           >
                             <FormControlLabel
                               value="712"
@@ -1536,23 +1538,17 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                               control={<Radio />}
                               label="Property Card"
                             />
-                            <FormControlLabel
-                              value="ulpin"
-                              control={<Radio />}
-                              label="ULPIN"
-                            />
                           </RadioGroup>
                         </Grid>
                       )} */}
                     </Grid>
                   </Grid>
-
                   {userType == 1 ? (
                     <Grid item md={12}>
                       {isMHProperty == "no" ? (
                         <UserNoMHProperty
-                          heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                          inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                          heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                          inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                           userNoMhProp={userNoMhProp}
                           setUserNoMhProp={setUserNoMhProp}
                           setIsValid={setIsValid}
@@ -1562,8 +1558,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                         <>
                           {property == "712" && isULPIN == "no" && (
                             <UserMHPropertyType712
-                              heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                              inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                              heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                              inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                               userMhPropType712={userMhPropType712}
                               setUserMhPropType712={setUserMhPropType712}
                               setIsValid={setIsValid}
@@ -1572,8 +1568,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                           )}
                           {property == "propertyCard" && isULPIN == "no" && (
                             <UserMHPropertyTypePropertyCard
-                              heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                              inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                              heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                              inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                               userMhPropTypePropertyCard={
                                 userMhPropTypePropertyCard
                               }
@@ -1586,8 +1582,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                           )}
                           {isULPIN == "yes" && (
                             <UserMHPropertTypeULPIN
-                              heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                              inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                              heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                              inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                               userMhPropULPIN={userMhPropULPIN}
                               setUserMhPropULPIN={setUserMhPropULPIN}
                               setIsValid={setIsValid}
@@ -1601,8 +1597,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                     <Grid item md={12}>
                       {isMHProperty == "no" ? (
                         <CompanyNoMHProperty
-                          heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                          inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                          heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                          inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                           companyNoMhProp={companyNoMhProp}
                           setCompanyNoMhProp={setCompanyNoMhProp}
                           setIsValid={setIsValid}
@@ -1612,8 +1608,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                         <>
                           {property == "712" && isULPIN == "no" && (
                             <CompanyMHPropertType712
-                              heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                              inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                              heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                              inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                               companyMhPropType712={companyMhPropType712}
                               setCompanyMhPropType712={setCompanyMhPropType712}
                               setIsValid={setIsValid}
@@ -1622,8 +1618,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                           )}
                           {property == "propertyCard" && isULPIN == "no" && (
                             <CompanyMHPropertyTypePropertyCard
-                              heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                              inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                              heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                              inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                               companyMhPropTypePropertyCard={
                                 companyMhPropTypePropertyCard
                               }
@@ -1636,8 +1632,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                           )}
                           {isULPIN == "yes" && (
                             <CompanyMHPropertyTypeULPIN
-                              heading="भाडेपट्टा घेणाऱ्याची माहिती"
-                              inputlabel="भाडेपट्टा घेणाऱ्याचे नाव"
+                              heading="मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती"
+                              inputlabel="मृत्यूपत्र / इच्छापत्र घेणाऱ्याचे नाव"
                               companyMhPropULPIN={companyMhPropULPIN}
                               setCompanyMhPropULPIN={setCompanyMhPropULPIN}
                               setIsValid={setIsValid}
@@ -1650,7 +1646,6 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                   )}
                 </Grid>
               </Grid>
-
               {/* <Grid
                 item
                 md={2}
@@ -1660,7 +1655,7 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                   alignItems: "center",
                 }}
               >
-                <InputLabel className={styles.inputlabel}>
+                <InputLabel className="inputlabel">
                   <b>फोटोग्राफ </b>
                   <span>*</span>
                 </InputLabel>
@@ -1725,7 +1720,7 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
           <Grid item md={12}>
             <UserAddress
-              type="bhadePattaGhenar"
+              type="mryutuPatraGhenar"
               isEdit={isEdit}
               hasSignature={false}
               isReset={isReset}
@@ -1748,6 +1743,7 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                 variant="outlined"
                 startIcon={<RotateRightRoundedIcon />}
                 sx={{ mr: 2 }}
+                onClick={handleReset}
               >
                 रीसेट करा
               </Button>
@@ -1755,17 +1751,8 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                 variant="contained"
                 endIcon={<SaveRoundedIcon />}
                 onClick={handleSave}
-                sx={{ mr: 2 }}
               >
                 जतन करा
-              </Button>
-              <Button
-                variant="contained"
-                endIcon={<ArrowForwardRoundedIcon />}
-                onClick={() => setActiveStep(2)}
-                disabled={responseData.length == 0}
-              >
-                भाडेपट्टा माहिती भरा
               </Button>
             </Grid>
           </Grid>
@@ -1774,21 +1761,23 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
 
       <Grid item md={12} mt={3}>
         <TableContainer component={Paper} elevation={5}>
-          <h3 style={{ marginLeft: 20 }}>भाडेपट्टा घेणारा माहिती तक्ता</h3>
+          <h3 style={{ marginLeft: 20 }}>
+            मृत्यूपत्र / इच्छापत्र लाभार्थी माहिती तक्ता
+          </h3>
           <Table>
             <TableHead style={{ backgroundColor: "#F4F4F4" }}>
               <TableRow>
                 <TableCell>अ. क्र.</TableCell>
                 <TableCell>जिल्हा / तालुका / न. भू. कार्यालय / गांव</TableCell>
-                <TableCell>भाडेपट्टा घेणाऱ्याचा प्रकार</TableCell>
-                <TableCell>भाडेपट्टा घेणाऱ्याचे नाव</TableCell>
+                <TableCell>मृत्यूपत्र / इच्छापत्र लाभार्थीचा प्रकार</TableCell>
+                <TableCell>मृत्यूपत्र / इच्छापत्र लाभार्थीचे नाव</TableCell>
                 <TableCell>उर्फ नाव</TableCell>
                 <TableCell>धारक प्रकार</TableCell>
                 <TableCell>स्त्री /पुरुष</TableCell>
                 <TableCell>अ.पा.क/ ए.कू.मॅ.</TableCell>
-                <TableCell>अ.पा.क</TableCell>
                 <TableCell>जन्म दिनांक</TableCell>
-                <TableCell>भाडेपट्टा घेणाराचा पत्ता</TableCell>
+                <TableCell>अ.पा.क</TableCell>
+                <TableCell>लाभार्थीचा पत्ता</TableCell>
                 <TableCell>कृती करा</TableCell>
               </TableRow>
             </TableHead>
@@ -1803,45 +1792,41 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                         {applicationData?.taluka_name} /{" "}
                         {applicationData?.village_name}
                       </TableCell>
-                      <TableCell>{val?.usertype}</TableCell>
+                      <TableCell>{val?.userType}</TableCell>
+                      <TableCell>{val?.fullNameInMarathi}</TableCell>
                       <TableCell>
-                        {val?.usertype == "व्यक्ती"
-                          ? val?.fullNameInMarathi
-                          : val?.companyName}
-                      </TableCell>
-
-                      <TableCell>
-                        {val?.usertype == "व्यक्ती"
-                          ? val?.userDetails?.aliceName
+                        {val?.dharak?.userdharak?.aliceName
+                          ? val?.dharak?.userdharak?.aliceName
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        {val?.usertype == "व्यक्ती"
+                        {val?.userType == "व्यक्ती"
                           ? val?.dharak?.userdharak?.holderType
                               ?.owner_status_description
                           : val?.dharak?.companydharak?.holderType
                               ?.owner_status_description}
                       </TableCell>
                       <TableCell>
-                        {val?.usertype == "व्यक्ती"
+                        {val?.userType == "व्यक्ती"
                           ? val?.dharak?.userdharak?.gender?.gender_description
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        {val?.usertype == "व्यक्ती"
-                          ? val?.dharak?.userdharak?.aapakDropdown
+                        {val?.dharak?.companydharak?.aapak
+                          ? val?.dharak?.companydharak?.aapakDropdown
                               ?.apk_description
+                          : val?.dharak?.userdharak?.aapakDropdown
+                              ?.apk_description}
+                      </TableCell>
+                      <TableCell>
+                        {val?.dharak?.userdharak?.dob
+                          ? val?.dharak?.userdharak?.dob
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        {val?.usertype == "व्यक्ती"
-                          ? val?.dharak?.userdharak?.aapak
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {val?.usertype == "व्यक्ती"
-                          ? val?.userDetails?.dob
-                          : "-"}
+                        {val?.dharak?.companydharak?.aapak
+                          ? val?.dharak?.companydharak?.aapak
+                          : val?.dharak?.userdharak?.aapak}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -1854,9 +1839,7 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
                       <TableCell>
                         <IconButton
                           color="error"
-                          onClick={() =>
-                            handleDelete(val?.mutation_givertaker_id)
-                          }
+                          onClick={() => handleDelete(val?.mutation_dtl_id)}
                         >
                           <DeleteForeverOutlinedIcon />
                         </IconButton>
@@ -1872,4 +1855,4 @@ const BhadePattaGhenar = ({ setActiveStep, applicationData }) => {
   );
 };
 
-export default BhadePattaGhenar;
+export default MryutuPatraGhenar;

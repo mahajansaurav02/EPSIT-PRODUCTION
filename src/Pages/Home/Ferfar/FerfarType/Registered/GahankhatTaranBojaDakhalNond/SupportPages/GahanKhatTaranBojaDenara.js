@@ -42,14 +42,17 @@ import AxiosInstance from "../../../../../../../Instance/AxiosInstance";
 import TransliterationTextField from "../../../../../../../ui/TranslationTextfield/EngToMarTextfield";
 import URLS from "../../../../../../../URLs/url";
 import NotesPaper from "../../../../../../../ui/NotesPaper/NotesPaper";
-import { gahankhatTaranBojaDenaraNotesArr } from "../../../../../../../NotesArray/NotesArray";
+import {
+  gahankhatTaranBojaDenaraNotesArr,
+  gahankhatTaranBojaKamiKarneDenaraNotesArr,
+} from "../../../../../../../NotesArray/NotesArray";
 import ShowAddress from "../../SupportPages/ShowAddress";
 import {
   filterOnlyLettersAndSpaces,
   filterOnlyMarathiAndEnglishLettersWithSpaces,
 } from "../../../../../../../Validations/utils";
 
-const GahankhatTaranBojaDenara = () => {
+const GahankhatTaranBojaDenara = ({ applicationData }) => {
   const { sendRequest } = AxiosInstance();
   const applicationId = sessionStorage.getItem("applicationId");
   const [giver, setGiverData] = useState([]);
@@ -418,15 +421,29 @@ const GahankhatTaranBojaDenara = () => {
 
       <Grid item md={12}>
         <NotesPaper
-          heading="गहाणखत / तारण / बोजा देणाराची माहिती भरण्यासाठी आवश्यक सूचना"
-          arr={gahankhatTaranBojaDenaraNotesArr}
+          heading={
+            applicationData.mutation_type_code == "06"
+              ? "गहाणखत / तारण / बोजा देणाराची माहिती भरण्यासाठी आवश्यक सूचना"
+              : "गहाणखत / तारण / बोजा बँक / संस्था माहिती भरण्यासाठी आवश्यक सूचना"
+          }
+          arr={
+            applicationData.mutation_type_code == "06"
+              ? gahankhatTaranBojaDenaraNotesArr
+              : gahankhatTaranBojaKamiKarneDenaraNotesArr
+          }
         />
       </Grid>
 
       <Paper elevation={5} sx={{ p: 2, mt: 2 }} className="papermain">
         <Grid container spacing={1}>
           <Grid item md={12}>
-            <h4 className="heading">गहाणखत / तारण / बोजा देणारा</h4>
+            <h4 className="heading">
+              गहाणखत / तारण / बोजा{" "}
+              {applicationData.mutation_type_code == "06"
+                ? "देणारा"
+                : "बँक / संस्था"}
+              देणारा
+            </h4>
           </Grid>
           <Grid item md={12}>
             <Grid container>
@@ -673,6 +690,22 @@ const GahankhatTaranBojaDenara = () => {
                           field.onChange(e);
                           handleUserDetails(e);
                         }}
+
+                        // onChange={(e) => {
+                        //   const sanitizedValue = e.target.value.replace(
+                        //     /[^0-9]/g,
+                        //     ""
+                        //   );
+                        //   field.onChange(sanitizedValue);
+                        //   const sanitizedEvent = {
+                        //     ...e,
+                        //     target: {
+                        //       ...e.target,
+                        //       value: sanitizedValue,
+                        //     },
+                        //   };
+                        //   handleUserDetails(sanitizedEvent);
+                        // }}
                       />
                       <FormHelperText sx={{ color: "red" }}>
                         {errors.bojaValue && errors.bojaValue.message}
@@ -781,7 +814,11 @@ const GahankhatTaranBojaDenara = () => {
 
           <Grid item md={12}>
             <UserAddress
-              type="gahankhatTaranBojaDakhalNondDenar"
+              type={
+                applicationData.mutation_type_code == "06"
+                  ? "gahankhatTaranBojaDakhalNondDenar"
+                  : "gahankhatTaranBojaKamiKarneNondDenar"
+              }
               hasSignature={false}
               isReset={isReset}
               isIndian={isIndian}
@@ -862,7 +899,11 @@ const GahankhatTaranBojaDenara = () => {
       <Grid item md={12} mt={3}>
         <TableContainer component={Paper} elevation={5}>
           <h3 style={{ marginLeft: 20 }}>
-            गहाणखत / तारण / बोजा देणारा माहिती तक्ता
+            गहाणखत / तारण / बोजा
+            {applicationData.mutation_type_code == "06"
+              ? " देणारा "
+              : " बँक / संस्था "}
+            माहिती तक्ता
           </h3>
           <Table>
             <TableHead style={{ backgroundColor: "#F4F4F4" }}>

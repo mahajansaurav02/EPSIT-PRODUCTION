@@ -3,10 +3,12 @@ import { Box, Grid, Step, StepButton, Stepper } from "@mui/material";
 import GahankhatTaranBojaGhenara from "./SupportPages/GahanKhatTaranBojaGhenara";
 import GahankhatTaranBojaDenara from "./SupportPages/GahanKhatTaranBojaDenara";
 
-const steps = ["गहाणखत / तारण / बोजा घेणारा", "गहाणखत / तारण / बोजा देणारा"];
-
 const GahankhatTaranBojaDakhalNond = ({ applicationData }) => {
   const [activeStep, setActiveStep] = useState(0);
+  const steps =
+    applicationData.mutation_type_code == "06"
+      ? ["गहाणखत / तारण / बोजा घेणारा", "गहाणखत / तारण / बोजा देणारा"]
+      : ["गहाणखत / तारण / बोजा धारकाचे नाव", "बँक / संस्था"];
 
   const handleStep = (step) => () => {
     setActiveStep(step);

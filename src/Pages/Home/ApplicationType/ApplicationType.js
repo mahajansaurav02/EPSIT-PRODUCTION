@@ -523,7 +523,7 @@ const ApplicationTYpe = () => {
                           // dropdownMutations.map((val, i) => (
                           dropdownMutations
                             .filter((val) =>
-                              ["01", "03", "06", "04", "09"].includes(
+                              ["01", "03", "06","05","20", "04", "09","10"].includes(
                                 // with हीबानामा
                                 // ["01", "03", "06", "04", "09", "23"].includes(
                                 val?.mutation_code

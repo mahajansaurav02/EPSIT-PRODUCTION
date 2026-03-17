@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   InputLabel,
@@ -142,7 +142,6 @@ const UserDharak = ({ userDharak, setUserDharak, setIsValid, isReset }) => {
       },
     });
   };
-
   const setDharakType = () => {
     sendRequest(
       `${URLS?.BaseURL}/EPCISAPIS/ownerAccountType`,
@@ -502,6 +501,7 @@ const UserDharak = ({ userDharak, setUserDharak, setIsValid, isReset }) => {
             render={({ field }) => (
               <>
                 <TextField
+                  sx={{ mt: 1 }}
                   fullWidth
                   placeholder="Mother Name"
                   className="textfield"

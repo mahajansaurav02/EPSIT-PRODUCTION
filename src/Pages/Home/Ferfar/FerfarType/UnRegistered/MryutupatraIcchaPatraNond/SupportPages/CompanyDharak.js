@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
 import {
   Grid,
   InputLabel,
   MenuItem,
   Select,
-  TextField,
   FormHelperText,
 } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -34,8 +33,10 @@ const CompanyDharak = ({
         holderType: holderTypeValidationSchema,
       })
     ),
+    defaultValues: {
+      holderType: "",
+    },
   });
-
   const handleBlur = async (name) => {
     await trigger(name);
   };
@@ -53,6 +54,11 @@ const CompanyDharak = ({
         owner_status_description: obj?.account_type_description,
       },
     });
+  };
+
+  const handleCompanyDharak = (e) => {
+    const { name, value } = e?.target;
+    setCompanyDharak({ ...companyDharak, [name]: value });
   };
 
   const setDharakType = () => {

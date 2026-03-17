@@ -3,9 +3,12 @@ import { Box, Grid, Step, StepButton, Stepper } from "@mui/material";
 import EeKuMya from "./SupportPages/EeKuMya";
 import EeKuMyaDharakachiVarasNond from "./SupportPages/EeKuMyaDharakachiVarasNond";
 
-const steps = ["एकत्र कुटुंब मॅनेजर (ए.कू.मॅ.)", "ए.कू.मॅ. सहधारकाची नोंद"];
+const steps = [
+  "एकत्र कुटुंब मॅनेजर (ए.कू.मॅ.)",
+  "ए.कू.मॅ. धारकाच्या वारसाची नोंद",
+];
 
-const EeKuMyaNondkamiKarne = ({ applicationData }) => {
+const EeKuMyaNondkamiKarne = () => {
   const [activeStep, setActiveStep] = useState(0);
 
   const handleStep = (step) => () => {
@@ -15,7 +18,7 @@ const EeKuMyaNondkamiKarne = ({ applicationData }) => {
     <>
       <Grid item md={12}>
         <Box sx={{ width: "100%" }}>
-          <Stepper activeStep={activeStep} sx={{ px: "400px" }}>
+          <Stepper activeStep={activeStep} sx={{ px: "350px" }}>
             {steps.map((label, index) => (
               <Step key={label}>
                 <StepButton color="inherit" onClick={handleStep(index)}>
@@ -26,15 +29,8 @@ const EeKuMyaNondkamiKarne = ({ applicationData }) => {
           </Stepper>
           <div style={{ marginTop: 10 }}>
             <React.Fragment>
-              {activeStep == 0 && (
-                <EeKuMya
-                  setActiveStep={setActiveStep}
-                  applicationData={applicationData}
-                />
-              )}
-              {activeStep == 1 && (
-                <EeKuMyaDharakachiVarasNond applicationData={applicationData} />
-              )}
+              {activeStep == 0 && <EeKuMya setActiveStep={setActiveStep} />}
+              {activeStep == 1 && <EeKuMyaDharakachiVarasNond />}
             </React.Fragment>
           </div>
         </Box>

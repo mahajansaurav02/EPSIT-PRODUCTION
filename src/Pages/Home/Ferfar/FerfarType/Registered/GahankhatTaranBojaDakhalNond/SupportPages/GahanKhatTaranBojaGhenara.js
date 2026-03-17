@@ -49,7 +49,10 @@ import AxiosInstance from "../../../../../../../Instance/AxiosInstance";
 import TransliterationTextField from "../../../../../../../ui/TranslationTextfield/EngToMarTextfield";
 import URLS from "../../../../../../../URLs/url";
 import NotesPaper from "../../../../../../../ui/NotesPaper/NotesPaper";
-import { gahankhatTaranBojaGhenaraNotesArr } from "../../../../../../../NotesArray/NotesArray";
+import {
+  gahankhatTaranBojaGhenaraNotesArr,
+  gahankhatTaranBojaKamiKarneGhenaraNotesArr,
+} from "../../../../../../../NotesArray/NotesArray";
 import Swal from "sweetalert2";
 import ShowAddress from "../../SupportPages/ShowAddress";
 import {
@@ -237,6 +240,7 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
       },
     );
   };
+
   // const handleUserName = (e) => {
   //   setUserDetails({
   //     ...userDetails,
@@ -297,6 +301,7 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
   //     }
   //   );
   // };
+
   const handleUserName = (e) => {
     setUserDetails({
       ...userDetails,
@@ -711,15 +716,27 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
 
       <Grid item md={12}>
         <NotesPaper
-          heading="गहाणखत / तारण / बोजा घेणाराची माहिती भरण्यासाठी आवश्यक सूचना"
-          arr={gahankhatTaranBojaGhenaraNotesArr}
+          heading={
+            applicationData.mutation_type_code == "06"
+              ? "गहाणखत / तारण / बोजा देणाराची माहिती भरण्यासाठी आवश्यक सूचना"
+              : "गहाणखत / तारण / बोजा धारकाची माहिती भरण्यासाठी आवश्यक सूचना"
+          }
+          arr={
+            applicationData.mutation_type_code == "06"
+              ? gahankhatTaranBojaGhenaraNotesArr
+              : gahankhatTaranBojaKamiKarneGhenaraNotesArr
+          }
         />
       </Grid>
 
       <Paper elevation={5} sx={{ p: 2, mt: 2 }} className="papermain">
         <Grid container spacing={1}>
           <Grid item md={12}>
-            <h4 className="heading">गहाणखत / तारण / बोजा घेणारा</h4>
+            <h4 className="heading">
+              {applicationData.mutation_type_code == "06"
+                ? "गहाणखत / तारण / बोजा घेणारा"
+                : "गहाणखत / तारण / बोजा धारकाचे नाव"}
+            </h4>
           </Grid>
           <Grid item md={12}>
             <Grid container spacing={2}>
@@ -818,7 +835,11 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
               render={({ field }) => (
                 <>
                   <InputLabel className="inputlabel">
-                    <b>गहाणखत / तारण / बोजा घेणाराचे नाव </b>
+                    <b>
+                      {applicationData.mutation_type_code == "06"
+                        ? "गहाणखत / तारण / बोजा घेणाराचे नाव "
+                        : "गहाणखत / तारण / बोजा धारकाचे नाव "}
+                    </b>
                     <span>*</span>
                   </InputLabel>
                   <Select
@@ -909,8 +930,11 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
           <Grid item md={12}>
             <InputLabel className="inputlabel">
               <b>
-                गहाणखत / तारण / बोजा घेणाराचे नाव <span> *</span> (इंग्रजी
-                मध्ये)
+                गहाणखत / तारण / बोजा
+                {applicationData.mutation_type_code == "06"
+                  ? " घेणाराचे "
+                  : " धारकाचे "}
+                नाव <span> *</span> (इंग्रजी मध्ये)
               </b>
             </InputLabel>
             <Grid container justifyContent="space-between">
@@ -1208,7 +1232,13 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
               </Grid>
               <Grid item md={3}>
                 <InputLabel className="inputlabel">
-                  <b>बोजा घेणाऱ्याच्या नावे उपलब्ध क्षेत्र (चौ.मी.)</b>
+                  <b>
+                    बोजा
+                    {applicationData.mutation_type_code == "06"
+                      ? " घेणाऱ्याच्या "
+                      : " धारकाच्या "}
+                    नावे उपलब्ध क्षेत्र (चौ.मी.)
+                  </b>
                 </InputLabel>
                 <TextField
                   fullWidth
@@ -1297,7 +1327,11 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
 
           <Grid item md={12}>
             <UserAddress
-              type="gahankhatTaranBojaDakhalNondGhenar"
+              type={
+                applicationData.mutation_type_code == "06"
+                  ? "gahankhatTaranBojaDakhalNondGhenar"
+                  : "gahankhatTaranBojaKamiKarneNondGhenar"
+              }
               isReset={isReset}
               hasSignature={false}
               isIndian={isIndian}
@@ -1326,7 +1360,11 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
                   style={{ display: "inline-flex", alignItems: "center" }}
                 >
                   <Typography variant="h5" fontSize="14px" fontWeight={600}>
-                    आणखी गहाणखत / तारण / बोजा घेणार आहे का?
+                    आणखी गहाणखत / तारण / बोजा{" "}
+                    {applicationData.mutation_type_code == "06"
+                      ? "घेणार"
+                      : "धारक"}
+                    आहे का?
                   </Typography>
                 </Grid>
 
@@ -1378,7 +1416,10 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
                 onClick={() => setActiveStep(1)}
                 disabled={responseData.length == 0}
               >
-                गहाणखत / तारण / बोजा देणाऱ्याची माहिती भरा
+                {applicationData.mutation_type_code == "06"
+                  ? "गहाणखत / तारण / बोजा देणाऱ्याची माहिती भरा"
+                  : "बँक / संस्था माहिती भरा"}
+                {/* गहाणखत / तारण / बोजा देणाऱ्याची माहिती भरा */}
               </Button>
             </Grid>
           </Grid>
@@ -1388,7 +1429,9 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
       <Grid item md={12} mt={3}>
         <TableContainer component={Paper} elevation={5}>
           <h3 style={{ marginLeft: 20 }}>
-            गहाणखत / तारण / बोजा घेणारा माहिती तक्ता
+            गहाणखत / तारण / बोजा
+            {applicationData.mutation_type_code == "06" ? " घेणारा " : " धारक "}
+            माहिती तक्ता
           </h3>
           <Table>
             <TableHead style={{ backgroundColor: "#F4F4F4" }}>
@@ -1491,13 +1534,21 @@ const GahankhatTaranBojaGhenara = ({ applicationData, setActiveStep }) => {
               }}
             >
               <h3 style={{ marginLeft: 20 }}>
-                गहाणखत / तारण / बोजा देणारा माहिती तक्ता
+                गहाणखत / तारण / बोजा
+                {applicationData.mutation_type_code == "06"
+                  ? " देणारा "
+                  : " बँक / संस्था "}
+                माहिती तक्ता
               </h3>
               <Button
                 onClick={() => setActiveStep(1)}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
-                आणखी गहाणखत / तारण / बोजा देणाऱ्याची माहिती भरा
+                आणखी गहाणखत / तारण / बोजा{" "}
+                {applicationData.mutation_type_code == "06"
+                  ? "गहाणखत / तारण / बोजा देणाऱ्याची माहिती भरा "
+                  : "बँक / संस्था माहिती भरा "}
+                माहिती भरा
               </Button>
             </div>
             <Table>

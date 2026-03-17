@@ -23,6 +23,7 @@ const MryutuPatraIcchaPatraNond = lazy(() =>
     "./FerfarType/Registered/MryutuPatraIcchaPatraNond/MryutuPatraIcchaPatraNond"
   )
 );
+
 const GahankhatTaranBojaDakhalNond = lazy(() =>
   import(
     "./FerfarType/Registered/GahankhatTaranBojaDakhalNond/GahankhatTaranBojaDakhalNond"
@@ -48,6 +49,11 @@ const EeKuMyaNondkamiKarne = lazy(() =>
 );
 const HibaNama = lazy(() =>
   import("./FerfarType/UnRegistered/HibaNama/HibaNama")
+);
+const MryutuPatraIcchaPatraNondUnRegistered = lazy(() =>
+  import(
+    "./FerfarType/UnRegistered/MryutupatraIcchaPatraNond/MryutuPatraIcchaPatraNondUnRegistered"
+  )
 );
 
 const Ferfar = () => {
@@ -188,11 +194,21 @@ const Ferfar = () => {
               "मृत्यूपत्र / इच्छापत्र नोंद" && (
               <MryutuPatraIcchaPatraNond applicationData={applicationData} />
             )} */}
+            {applicationData.mutation_type_code == "05" && (
+              <MryutuPatraIcchaPatraNondUnRegistered
+                applicationData={applicationData}
+              />
+            )}
             {applicationData?.mutation_type_code == "06" && (
               <GahankhatTaranBojaDakhalNond applicationData={applicationData} />
             )}
-            {applicationData?.mutation_type_code == "10" && <BhadePattaNond />}
-            {applicationData?.mutation_type_code == "09" && (
+            {applicationData?.mutation_type_code == "07" && (
+              <GahankhatTaranBojaDakhalNond applicationData={applicationData} />
+
+            )}
+            {applicationData?.mutation_type_code == "10" && (
+              <BhadePattaNond applicationData={applicationData} />
+            )}            {applicationData?.mutation_type_code == "09" && (
               <HakkaSodPatraReleaseDidNond applicationData={applicationData} />
             )}
           </>
@@ -202,7 +218,10 @@ const Ferfar = () => {
               <VarasNond applicationData={applicationData} />
             )}
             {applicationData.mutation_type_code == "05" && (
-              <MryutuPatraIcchaPatraNond applicationData={applicationData} />
+              <MryutuPatraIcchaPatraNondUnRegistered applicationData={applicationData} />
+            )}
+            {applicationData.mutation_type_code == "20" && (
+              <EeKuMyaNondkamiKarne applicationData={applicationData} />
             )}
             {reduxState?.mutationType?.mutationTypeName ==
               "ताबा पावतीने नोंद" && <TabaPavtiNond />}

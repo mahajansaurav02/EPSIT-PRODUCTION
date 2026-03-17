@@ -8,6 +8,7 @@ import {
   FormHelperText,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Paper,
@@ -26,7 +27,6 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import RotateRightRoundedIcon from "@mui/icons-material/RotateRightRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import CloseIcon from "@mui/icons-material/Close";
 import UserAddress from "../../SupportPages/UserAddress";
 import {
   firstNameEnglishValidationSchema,
@@ -43,18 +43,21 @@ import AxiosInstance from "../../../../../../../Instance/AxiosInstance";
 import TransliterationTextField from "../../../../../../../ui/TranslationTextfield/EngToMarTextfield";
 import URLS from "../../../../../../../URLs/url";
 import NotesPaper from "../../../../../../../ui/NotesPaper/NotesPaper";
-import { bhadePattaDenarNotesArr } from "../../../../../../../NotesArray/NotesArray";
+import CloseIcon from "@mui/icons-material/Close";
+import { mryutupatraDenarNotesArrUnRegistered } from "../../../../../../../NotesArray/NotesArray";
 import Swal from "sweetalert2";
 import ShowAddress from "../../SupportPages/ShowAddress";
 import {
   filterOnlyLettersAndSpaces,
+  filterOnlyLettersNumbersAndSpacesForMryutuDakhlaNo,
   filterOnlyMarathiAndEnglishLettersWithSpaces,
 } from "../../../../../../../Validations/utils";
 
-const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
+const MryutuPatraDenar = ({ setActiveStep, applicationData }) => {
   const { sendRequest } = AxiosInstance();
   const applicationId = sessionStorage.getItem("applicationId");
   const today = new Date().toISOString().split("T")[0];
+  const [issueOfficeArr, setIssurOfficeArr] = useState([]);
   const [naBhu, setNaBhu] = useState("");
   const [lrPropertyUID, setLrPropertyUID] = useState("");
   const [milkat, setMilkat] = useState("land");
@@ -78,12 +81,16 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
     dob: "",
     motherName: "",
     motherNameEng: "",
+    dateOfDeath: "",
+    deathCertificateIssueOfficeDropdown: {},
+    deathCertificateNo: "",
+    dateOfDeathCertificate: "",
   });
-  const [isMoreUsers, setIsMoreUsers] = useState("no");
 
   const [radio, setRadio] = useState("yes");
+  const [radioProbet, setRadioProbet] = useState("no");
   const [actualArea, setActualArea] = useState("");
-  const [availableArea, setAvailableArea] = useState("");
+  const [actualDharakArea, setActualDharakArea] = useState("");
   const [mutationArea, setMutationArea] = useState("");
   const [userDataArr, setUserDataArr] = useState([]);
   const [selectedUserArr, setSelectedUserArr] = useState([]);
@@ -119,13 +126,27 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
     signatureSrc: "",
   });
 
+  const [uploadDoc, setUploadDoc] = useState({ docName: "", docSrc: "" });
+  const [uploadDocError, setUploadDocError] = useState("");
+
+  const [uploadDocProbet, setUploadDocProbet] = useState({
+    docName: "",
+    docSrc: "",
+  });
+  const [uploadDocProbetError, setUploadDocProbetError] = useState("");
+
   //-------------------------------check validations------------------
   const [isValid, setIsValid] = useState({});
 
   //------------------------------Combined States----------------------------
   const [responseData, setResponseData] = useState([]);
   const [ghenarData, setGhenarData] = useState([]);
-  const [bhadepattaMahitiData, setBhadepattaMahitiData] = useState({});
+
+  //------------------------------Edit State---------------------------------
+  const [isEdit, setIsEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [isHardEdit, setIsHardEdit] = useState(false);
+  const [editObj, setEditObj] = useState({});
 
   //--------------------------------Show Address-----------------------------
   const [open, setOpen] = useState(false);
@@ -152,7 +173,7 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
     resolver: yupResolver(
       yup.object().shape({
         nabhu: nabhuValidationSchema,
-        userName: yup.string().required("भाडेपट्टा देणारा निवडा"),
+        userName: yup.string().required("मृत्यूपत्र / इच्छापत्र देणारा निवडा"),
         firstNameEng: firstNameEnglishValidationSchema,
         middleNameEng: middleNameEnglishValidationSchema,
         lastNameEng: lastNameEnglishValidationSchema,
@@ -173,6 +194,12 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
               )
             : schema.notRequired();
         }),
+        dateOfDeath: yup.string().required("मयताची दिनांक निवडा"),
+        deathCertificateIssueOfficeDropdown: yup
+          .string()
+          .required("मृत्यू दाखला देणाऱ्या संस्थेचे / कार्यालयाचे नाव निवडा"),
+        deathCertificateNo: yup.string().required("मयत दाखला क्रमांक टाका"),
+        dateOfDeathCertificate: yup.string().required("मयत दाखला दिनांक निवडा"),
       })
     ),
     defaultValues: {
@@ -183,6 +210,10 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       lastNameEng: "",
       motherName: "",
       motherNameEng: "",
+      dateOfDeath: "",
+      dateOfDeathCertificate: "",
+      deathCertificateIssueOfficeDropdown: "",
+      deathCertificateNo: "",
     },
   });
   const handleBlur = async (name) => {
@@ -198,10 +229,10 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
     setSubPropNo(obj?.sub_property_no);
     setActualArea(obj?.cityServeyAreaInSqm);
     if (obj?.milkat != "land") {
-      setAvailableArea(obj?.cityServeyAreaInSqm);
+      setActualDharakArea(obj?.cityServeyAreaInSqm);
       setMutationArea(obj?.cityServeyAreaInSqm);
     } else {
-      setAvailableArea("");
+      setActualDharakArea("");
       setMutationArea("");
     }
     getUserDetails(obj?.actual_cts_no, obj?.sub_property_no);
@@ -228,7 +259,6 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       }
     );
   };
-
   const handleUserName = (e) => {
     setUserDetails({
       ...userDetails,
@@ -289,7 +319,6 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       }
     );
   };
-
   // const handleUserName = (e) => {
   //   setUserDetails({
   //     ...userDetails,
@@ -330,7 +359,6 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
   //     }
   //   );
   // };
-
   const handleSuffix = (e) => {
     const value = e?.target?.value;
     const obj = suffixArr.find((o) => o?.name_title == value);
@@ -342,6 +370,11 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
   const handleUserDetails = (e) => {
     const { name, value } = e?.target;
     setUserDetails({ ...userDetails, [name]: value });
+  };
+  const handleDobDetails = (e) => {
+    const { name, value } = e?.target;
+    setUserDetails({ ...userDetails, dob: value, dateOfDeath: "" });
+    setValue("dateOfDeath", "");
     setValue(name, value, { shouldValidate: true });
   };
   const handleRadioChange = (e) => {
@@ -353,131 +386,317 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       setMutationArea("");
     }
   };
+  const handleProbet = (e) => {
+    setRadioProbet(e?.target?.value);
+  };
   const handleMutationArea = (e) => {
     const value = e?.target?.value;
     setMutationArea(value);
   };
-  const handleIsMoreUser = (e) => {
-    setIsMoreUsers(e?.target?.value);
-    if (e?.target?.value == "yes") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setTimeout(() => {
-        setIsMoreUsers("no");
-      }, 1000);
-    }
-  };
+  //old one for handleSave
+  // const handleSave = async () => {
+  //   if (isIndian == "india") {
+  //     const result = await trigger();
+  //     const isUserIndAdd = await isValid.triggerUserIndAdd();
+  //     if (result && isUserIndAdd) {
+  //       if (uploadDoc?.docName) {
+  //         sendRequest(
+  //           `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForGiver`,
+  //           "POST",
+  //           {
+  //             applicationid: applicationId,
+  //             village_code: applicationData?.village_code,
+  //             ctsNo: selectedUserArr[0]?.cts_number,
+  //             mutationSroNo: selectedUserArr[0]?.mutation_srno,
+  //             ownerNo: selectedUserArr[0]?.owner_number,
+  //             userDetails: {
+  //               ...userDetails,
+  //               userName: userName,
+  //               suffix: suffix,
+  //               suffixEng: suffixEng,
+  //               suffixcode: suffixcode,
+  //               suffixCodeEng: suffixCodeEng,
+  //               subPropNo: subPropNo,
+  //               nabhu: naBhu,
+  //               lrPropertyUID: lrPropertyUID,
+  //               milkat: milkat,
+  //               namud: namud,
+  //             },
+  //             areaForMutation: {
+  //               isFullAreaGiven: radio,
+  //               actualArea: actualArea,
+  //               mutationArea: mutationArea,
+  //               actualDharakArea: actualDharakArea,
+  //             },
+  //             address: {
+  //               addressType: isIndian,
+  //               indiaAddress: indiaAddress,
+  //             },
+  //             docUpload: uploadDoc,
+  //           },
+  //           (res) => {
+  //             if (res?.Code == "1") {
+  //               successToast(res?.Message);
+  //               getMryutuPatraDenarTableData();
+  //               handleReset();
+  //             } else {
+  //               errorToast(res?.Message);
+  //             }
+  //           },
+  //           (err) => {
+  //             errorToast(err?.Message);
+  //           }
+  //         );
+  //       } else {
+  //         errorToast("कृपया मृत्यू दाखला अपलोड करा !");
+  //       }
+  //     } else {
+  //       errorToast("Please Check All Fields");
+  //     }
+  //   } else {
+  //     const result = await trigger();
+  //     const isUserForeignAdd = await isValid.triggerUserForeignAdd();
+  //     if (result && isUserForeignAdd) {
+  //       if (uploadDoc?.docName) {
+  //         sendRequest(
+  //           `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForGiver`,
+  //           "POST",
+  //           {
+  //             applicationid: applicationId,
+  //             village_code: applicationData?.village_code,
+  //             ctsNo: selectedUserArr[0]?.cts_number,
+  //             mutationSroNo: selectedUserArr[0]?.mutation_srno,
+  //             ownerNo: selectedUserArr[0]?.owner_number,
+  //             userDetails: {
+  //               ...userDetails,
+  //               userName: userName,
+  //               suffix: suffix,
+  //               suffixEng: suffixEng,
+  //               suffixcode: suffixcode,
+  //               suffixCodeEng: suffixCodeEng,
+  //               nabhu: naBhu,
+  //               lrPropertyUID: lrPropertyUID,
+  //               milkat: milkat,
+  //               namud: namud,
+  //               subPropNo: subPropNo,
+  //             },
+  //             areaForMutation: {
+  //               isFullAreaGiven: radio,
+  //               actualArea: actualArea,
+  //               mutationArea: mutationArea,
+  //               actualDharakArea: actualDharakArea,
+  //             },
+  //             address: {
+  //               addressType: isIndian,
+  //               foreignAddress: foraighnAddress,
+  //             },
+  //             docUpload: uploadDoc,
+  //           },
+  //           (res) => {
+  //             if (res?.Code == "1") {
+  //               successToast(res?.Message);
+  //               getMryutuPatraDenarTableData();
+  //               handleReset();
+  //             } else {
+  //               errorToast(res?.Message);
+  //             }
+  //           },
+  //           (err) => {
+  //             errorToast(err?.Message);
+  //           }
+  //         );
+  //       } else {
+  //         errorToast("कृपया मृत्यू दाखला अपलोड करा !");
+  //       }
+  //     } else {
+  //       errorToast("Please Check All Fields");
+  //     }
+  //   }
+  // };
+
+  //new one for handleSave including probet validation
   const handleSave = async () => {
     if (isIndian == "india") {
       const result = await trigger();
       const isUserIndAdd = await isValid.triggerUserIndAdd();
 
-      if (result && isUserIndAdd) {
-        sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondGiver`,
-          "POST",
-          {
-            applicationid: applicationId,
-            village_code: applicationData?.village_code,
-            ctsNo: selectedUserArr[0]?.cts_number,
-            mutationSroNo: selectedUserArr[0]?.mutation_srno,
-            ownerNo: selectedUserArr[0]?.owner_number,
-            userDetails: {
-              ...userDetails,
-              userName: userName,
-              suffix: suffix,
-              suffixEng: suffixEng,
-              suffixcode: suffixcode,
-              suffixCodeEng: suffixCodeEng,
-              subPropNo: subPropNo,
-              nabhu: naBhu,
-              lrPropertyUID: lrPropertyUID,
-              milkat: milkat,
-              namud: namud,
-            },
-            areaOfMutation: {
-              isFullAreaGiven: radio,
-              actualArea: actualArea,
-              mutationArea: mutationArea,
-              availableArea: availableArea,
-            },
-            address: {
-              addressType: isIndian,
-              indiaAddress: indiaAddress,
-            },
-          },
-          (res) => {
-            if (res?.Code == "1") {
-              successToast(res?.Message);
-              handleReset();
-              getBhadepattaDenarTableData();
-            } else {
-              console.error(res?.Message);
-              errorToast(res?.Message);
-            }
-          },
-          (err) => {
-            errorToast(err?.Message);
-          }
-        );
-      } else {
+      if (!result || !isUserIndAdd) {
         errorToast("Please Check All Fields");
+        return;
       }
+
+      if (!uploadDoc?.docName) {
+        errorToast("कृपया मृत्यू दाखला अपलोड करा !");
+        return;
+      }
+
+      if (radioProbet === "yes" && !uploadDocProbet?.docName) {
+        errorToast("कृपया प्रोबेट अपलोड करा !");
+        return;
+      }
+
+      sendRequest(
+        `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForGiver`,
+        "POST",
+        {
+          applicationid: applicationId,
+          village_code: applicationData?.village_code,
+          ctsNo: selectedUserArr[0]?.cts_number,
+          mutationSroNo: selectedUserArr[0]?.mutation_srno,
+          ownerNo: selectedUserArr[0]?.owner_number,
+          userDetails: {
+            ...userDetails,
+            userName: userName,
+            suffix: suffix,
+            suffixEng: suffixEng,
+            suffixcode: suffixcode,
+            suffixCodeEng: suffixCodeEng,
+            subPropNo: subPropNo,
+            nabhu: naBhu,
+            lrPropertyUID: lrPropertyUID,
+            milkat: milkat,
+            namud: namud,
+          },
+          areaForMutation: {
+            isFullAreaGiven: radio,
+            actualArea: actualArea,
+            mutationArea: mutationArea,
+            actualDharakArea: actualDharakArea,
+          },
+          address: {
+            addressType: isIndian,
+            indiaAddress: indiaAddress,
+          },
+          docUpload: uploadDoc,
+          probet: {
+            isProbet: radioProbet,
+            docUploadProbet: uploadDocProbet,
+          },
+        },
+        (res) => {
+          if (res?.Code == "1") {
+            successToast(res?.Message);
+            getMryutuPatraDenarTableData();
+            handleReset();
+          } else {
+            errorToast(res?.Message);
+          }
+        },
+        (err) => {
+          errorToast(err?.Message);
+        }
+      );
     } else {
       const result = await trigger();
       const isUserForeignAdd = await isValid.triggerUserForeignAdd();
-      if (result && isUserForeignAdd) {
-        sendRequest(
-          `${URLS?.BaseURL}/MutationAPIS/CreateBhadepattaNondGiver`,
-          "POST",
-          {
-            applicationid: applicationId,
-            village_code: applicationData?.village_code,
-            ctsNo: selectedUserArr[0]?.cts_number,
-            mutationSroNo: selectedUserArr[0]?.mutation_srno,
-            ownerNo: selectedUserArr[0]?.owner_number,
-            userDetails: {
-              ...userDetails,
-              userName: userName,
-              suffix: suffix,
-              suffixEng: suffixEng,
-              suffixcode: suffixcode,
-              suffixCodeEng: suffixCodeEng,
-              nabhu: naBhu,
-              lrPropertyUID: lrPropertyUID,
-              milkat: milkat,
-              namud: namud,
-              subPropNo: subPropNo,
-            },
-            areaOfMutation: {
-              isFullAreaGiven: radio,
-              actualArea: actualArea,
-              mutationArea: mutationArea,
-              availableArea: availableArea,
-            },
-            address: {
-              addressType: isIndian,
-              foreignAddress: foraighnAddress,
-            },
-          },
-          (res) => {
-            if (res?.Code == "1") {
-              successToast(res?.Message);
-              handleReset();
-              getBhadepattaDenarTableData();
-            } else {
-              errorToast(res?.Message);
-            }
-          },
-          (err) => {
-            errorToast(err?.Message);
-          }
-        );
-      } else {
+
+      if (!result || !isUserForeignAdd) {
         errorToast("Please Check All Fields");
+        return;
       }
+
+      if (!uploadDoc?.docName) {
+        errorToast("कृपया मृत्यू दाखला अपलोड करा !");
+        return;
+      }
+
+      if (radioProbet === "yes" && !uploadDocProbet?.docName) {
+        errorToast("कृपया प्रोबेट अपलोड करा !");
+        return;
+      }
+
+      console.info("payload->>", {
+        applicationid: applicationId,
+        village_code: applicationData?.village_code,
+        ctsNo: selectedUserArr[0]?.cts_number,
+        mutationSroNo: selectedUserArr[0]?.mutation_srno,
+        ownerNo: selectedUserArr[0]?.owner_number,
+        userDetails: {
+          ...userDetails,
+          userName: userName,
+          suffix: suffix,
+          suffixEng: suffixEng,
+          suffixcode: suffixcode,
+          suffixCodeEng: suffixCodeEng,
+          nabhu: naBhu,
+          lrPropertyUID: lrPropertyUID,
+          milkat: milkat,
+          namud: namud,
+          subPropNo: subPropNo,
+        },
+        areaForMutation: {
+          isFullAreaGiven: radio,
+          actualArea: actualArea,
+          mutationArea: mutationArea,
+          actualDharakArea: actualDharakArea,
+        },
+        address: {
+          addressType: isIndian,
+          foreignAddress: foraighnAddress,
+        },
+        docUpload: uploadDoc,
+        probet: {
+          isProbet: radioProbet,
+          docUploadProbet: uploadDocProbet,
+        },
+      });
+
+      sendRequest(
+        `${URLS?.BaseURL}/MutationAPIS/CreateMrutyuPatraInfoForGiver`,
+        "POST",
+        {
+          applicationid: applicationId,
+          village_code: applicationData?.village_code,
+          ctsNo: selectedUserArr[0]?.cts_number,
+          mutationSroNo: selectedUserArr[0]?.mutation_srno,
+          ownerNo: selectedUserArr[0]?.owner_number,
+          userDetails: {
+            ...userDetails,
+            userName: userName,
+            suffix: suffix,
+            suffixEng: suffixEng,
+            suffixcode: suffixcode,
+            suffixCodeEng: suffixCodeEng,
+            nabhu: naBhu,
+            lrPropertyUID: lrPropertyUID,
+            milkat: milkat,
+            namud: namud,
+            subPropNo: subPropNo,
+          },
+          areaForMutation: {
+            isFullAreaGiven: radio,
+            actualArea: actualArea,
+            mutationArea: mutationArea,
+            actualDharakArea: actualDharakArea,
+          },
+          address: {
+            addressType: isIndian,
+            foreignAddress: foraighnAddress,
+          },
+          docUpload: uploadDoc,
+          probet: {
+            isProbet: radioProbet,
+            docUploadProbet: uploadDocProbet,
+          },
+        },
+        (res) => {
+          if (res?.Code == "1") {
+            successToast(res?.Message);
+            getMryutuPatraDenarTableData();
+            handleReset();
+          } else {
+            errorToast(res?.Message);
+          }
+        },
+        (err) => {
+          errorToast(err?.Message);
+        }
+      );
     }
   };
   const handleReset = () => {
+    setIsHardEdit(false);
+    setIsEdit(false);
     setSuffix("");
     setSuffixEng("");
     setUserName("");
@@ -488,8 +707,7 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
     setRadio("yes");
     setActualArea("");
     setMutationArea("");
-    setAvailableArea("");
-    setIsMoreUsers("no");
+    setActualDharakArea("");
     setUserDetails({
       firstName: "",
       middleName: "",
@@ -530,6 +748,8 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       signatureName: "",
       signatureSrc: "",
     });
+    setUploadDoc({ docName: "", docSrc: "" });
+    setUploadDocProbet({ docName: "", docSrc: "" });
 
     reset();
     setIsReset(!isReset);
@@ -537,8 +757,8 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
   const handleDelete = (id) => {
     if (responseData.length == 1) {
       Swal.fire({
-        title: `<p style="font-size: 0.8em;">भाडेपट्टा  घेणारे सुद्धा डिलीट होतील !</p>`,
-        html: '<span style="color: red;">डिलीट झाल्यानंतर पुन्हा नवीन भाडेपट्टा  देणारे-घेणारे भरावे लागतील</span>',
+        title: `<p style="font-size: 0.8em;">मृत्यूपत्र / इच्छापत्र लाभार्थी सुद्धा डिलीट होतील !</p>`,
+        html: '<span style="color: red;">डिलीट झाल्यानंतर पुन्हा नवीन मृत्यूपत्र / इच्छापत्र देणारे-लाभार्थी भरावे लागतील</span>',
         position: "center",
         icon: "warning",
         showCancelButton: true,
@@ -549,7 +769,7 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       }).then((result) => {
         if (result.isConfirmed) {
           sendRequest(
-            `${URLS?.BaseURL}/MutationAPIS/DeleteBhadepattaGiver`,
+            `${URLS?.BaseURL}/MutationAPIS/DeleteMrutyuPatraInfoForGiver`,
             "POST",
             {
               mutationId: id,
@@ -560,12 +780,11 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                 successToast(res?.Message);
                 Swal.fire(
                   "Deleted!",
-                  "भाडेपट्टा देणारा घेणारा डिलीट झालेला आहे",
+                  " मृत्यूपत्र / इच्छापत्र देणारा घेणारा डिलीट झालेला आहे",
                   "success"
                 );
-                getBhadepattaDenarTableData();
-                getBhadePattaGhenarTableData();
-                getBhadepattaMahitiTableData();
+                getMryutuPatraDenarTableData();
+                getMrututPatraGhenarTableData();
               } else {
                 errorToast(res?.Message);
               }
@@ -576,47 +795,149 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
           );
         }
       });
-    } else {
-      sendRequest(
-        `${URLS?.BaseURL}/MutationAPIS/DeleteBhadepattaGiver`,
-        "POST",
-        {
-          mutationId: id,
-          applicationId: applicationId,
-        },
-        (res) => {
-          if (res?.Code == "1") {
-            successToast(res?.Message);
-            getBhadepattaDenarTableData();
-            getBhadePattaGhenarTableData();
-            getBhadepattaMahitiTableData();
-          } else {
-            errorToast(res?.Message);
-          }
-        },
-        (err) => {
-          errorToast(err?.Message);
-        }
-      );
     }
   };
-
-  const getSuffix = () => {
+  const handleOfficeNameDetails = (e) => {
+    const code = e?.target?.value;
+    const obj = issueOfficeArr.find(
+      (o) => o?.certificate_authority_code == code
+    );
+    setUserDetails({
+      ...userDetails,
+      deathCertificateIssueOfficeDropdown: {
+        certificate_authority_code: obj?.certificate_authority_code.toString(),
+        certificate_authority_name: obj?.certificate_authority_name,
+      },
+    });
+  };
+  const handleUploadDocument = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 2048 * 1024) {
+        // 2 MB = 2048 * 1024 bytes
+        setUploadDocError("अपलोड कागदपत्र साइज 2 MB च्या वर आहे");
+        setUploadDoc({
+          ...uploadDoc,
+          docName: "",
+          docSrc: "",
+        });
+      } else {
+        setUploadDocError("");
+        const reader = new FileReader();
+        setValue("file", file.name);
+        reader.onloadend = () => {
+          if (reader.result) {
+            // Safely process the result
+            const base64Data = reader.result.replace(
+              /^data:application\/pdf;base64,/,
+              ""
+            );
+            setUploadDoc({
+              ...uploadDoc,
+              docSrc: base64Data,
+              docName: file.name,
+            });
+          } else {
+            setUploadDocError("File could not be read. Please try again.");
+            setUploadDoc({
+              ...uploadDoc,
+              docName: "",
+              docSrc: "",
+            });
+          }
+        };
+        reader.onerror = () => {
+          // Handle FileReader errors
+          setUploadDocError("An error occurred while reading the file.");
+          setUploadDoc({
+            ...uploadDoc,
+            docName: "",
+            docSrc: "",
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    } else {
+      setUploadDocError("");
+      setUploadDoc({
+        ...uploadDoc,
+        docName: "",
+        docSrc: "",
+      });
+    }
+  };
+  const handleUploadProbetDocument = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 2048 * 1024) {
+        // 2 MB = 2048 * 1024 bytes
+        setUploadDocProbetError("अपलोड कागदपत्र साइज 2 MB च्या वर आहे");
+        setUploadDocProbet({
+          ...uploadDocProbet,
+          docName: "",
+          docSrc: "",
+        });
+      } else {
+        setUploadDocProbetError("");
+        const reader = new FileReader();
+        setValue("file", file.name);
+        reader.onloadend = () => {
+          if (reader.result) {
+            const base64Data = reader.result.replace(
+              /^data:application\/pdf;base64,/,
+              ""
+            );
+            setUploadDocProbet({
+              ...uploadDocProbet,
+              docSrc: base64Data,
+              docName: file.name,
+            });
+          } else {
+            setUploadDocProbetError(
+              "File could not be read. Please try again."
+            );
+            setUploadDocProbet({
+              ...uploadDocProbet,
+              docName: "",
+              docSrc: "",
+            });
+          }
+        };
+        reader.onerror = () => {
+          setUploadDocProbetError("An error occurred while reading the file.");
+          setUploadDocProbet({
+            ...uploadDocProbet,
+            docName: "",
+            docSrc: "",
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    } else {
+      setUploadDocProbetError("");
+      setUploadDocProbet({
+        ...uploadDocProbet,
+        docName: "",
+        docSrc: "",
+      });
+    }
+  };
+  const setDeathCertificateIssueOfficeArr = () => {
     sendRequest(
-      `${URLS?.BaseURL}/EPCISAPIS/nameTitleList`,
+      `${URLS?.BaseURL}/EPCISAPIS/deathCertificateList`,
       "POST",
       null,
       (res) => {
-        setSuffixArr(JSON.parse(res?.ResponseData));
+        setIssurOfficeArr(JSON.parse(res?.ResponseData));
       },
       (err) => {
-        errorToast(err?.Message);
+        console.error(err);
       }
     );
   };
-  const getBhadepattaDenarTableData = () => {
+  const getMryutuPatraDenarTableData = () => {
     sendRequest(
-      `${URLS?.BaseURL}/MutationAPIS/GetBhadepattaGiverData`,
+      `${URLS?.BaseURL}/MutationAPIS/GetMrutyuPatraInfoForGiver`,
       "POST",
       applicationId,
       (res) => {
@@ -636,19 +957,18 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       }
     );
   };
-  const getBhadePattaGhenarTableData = () => {
+  const getMrututPatraGhenarTableData = () => {
     sendRequest(
-      `${URLS?.BaseURL}/MutationAPIS/GetBhadepattaTakerData`,
+      `${URLS?.BaseURL}/MutationAPIS/GetMrutyuPatraInfoForTaker`,
       "POST",
       applicationId,
       (res) => {
         if (res?.Code == "1") {
-          successToast(res?.Message);
           setGhenarData(res?.ResponseData);
         } else {
           if (res?.ResponseData.length == 0) {
             setGhenarData([]);
-          } else {
+          } else if (res?.ResponseData != "") {
             errorToast(res?.Message);
           }
         }
@@ -658,22 +978,13 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
       }
     );
   };
-  const getBhadepattaMahitiTableData = () => {
+  const getSuffix = () => {
     sendRequest(
-      `${URLS?.BaseURL}/MutationAPIS/GetBhadepattaInfoData`,
+      `${URLS?.BaseURL}/EPCISAPIS/nameTitleList`,
       "POST",
-      applicationId,
+      null,
       (res) => {
-        if (res?.Code == "1") {
-          successToast(res?.Message);
-          setBhadepattaMahitiData(res?.ResponseData);
-        } else {
-          if (res?.ResponseData === null) {
-            setBhadepattaMahitiData({});
-          } else {
-            errorToast(res?.Message);
-          }
-        }
+        setSuffixArr(JSON.parse(res?.ResponseData));
       },
       (err) => {
         errorToast(err?.Message);
@@ -681,20 +992,20 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
     );
   };
   useEffect(() => {
-    getBhadepattaDenarTableData();
-    getBhadePattaGhenarTableData();
-    getBhadepattaMahitiTableData();
+    getMryutuPatraDenarTableData();
+    getMrututPatraGhenarTableData();
+    setDeathCertificateIssueOfficeArr();
     getSuffix();
   }, []);
 
   useEffect(() => {
-    if (bhadepattaMahitiData && Object.keys(bhadepattaMahitiData).length > 0) {
+    if (ghenarData.length > 0) {
       sessionStorage.setItem("allowPoa", "yes");
       window.dispatchEvent(new Event("storage"));
     } else {
       sessionStorage.setItem("allowPoa", "no");
     }
-  }, [bhadepattaMahitiData]);
+  }, [ghenarData]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -702,7 +1013,6 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
   return (
     <>
       <Toast />
-
       {/*------------------------------------address preview dialog--------------------- */}
       <Dialog onClose={handleDialogClose} open={open} maxWidth="md">
         <DialogTitle sx={{ m: 0, p: 3 }}>
@@ -725,15 +1035,15 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
 
       <Grid item md={12}>
         <NotesPaper
-          heading="भाडेपट्टा देणाराची माहिती भरण्यासाठी आवश्यक सूचना"
-          arr={bhadePattaDenarNotesArr}
+          heading="मृत्यूपत्र / इच्छापत्र करून देणाराची माहिती भरण्यासाठी आवश्यक सूचना"
+          arr={mryutupatraDenarNotesArrUnRegistered}
         />
       </Grid>
 
       <Paper elevation={5} sx={{ p: 2, mt: 2 }} className="papermain">
         <Grid container spacing={1}>
           <Grid item md={12}>
-            <h4 className="heading">भाडेपट्टा देणार</h4>
+            <h4 className="heading">मृत्यूपत्र / इच्छापत्र करून देणार</h4>
           </Grid>
           <Grid item md={12}>
             <Grid container spacing={2}>
@@ -832,7 +1142,7 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
               render={({ field }) => (
                 <>
                   <InputLabel className="inputlabel">
-                    <b>भाडेपट्टा करून देणाराचे नाव </b>
+                    <b>मृत्यूपत्र / इच्छापत्र करून देणाराचे नाव </b>
                     <span>*</span>
                   </InputLabel>
                   <Select
@@ -879,7 +1189,7 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                   size="small"
                 >
                   {Array.isArray(suffixArr) &&
-                    suffixArr.map((val, i) => {
+                    suffixArr.slice(0, -1).map((val, i) => {
                       return (
                         <MenuItem
                           value={val?.name_title}
@@ -921,11 +1231,14 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
             </Grid>
           </Grid>
           <Grid item md={12}>
-            <InputLabel className="inputlabel">
-              <b>
-                भाडेपट्टा देणाराचे नाव <span> *</span> (इंग्रजी मध्ये)
-              </b>
-            </InputLabel>
+            {!isEdit && (
+              <InputLabel className="inputlabel">
+                <b>
+                  मृत्यूपत्र / इच्छापत्र देणाराचे नाव <span> *</span> (इंग्रजी
+                  मध्ये)
+                </b>
+              </InputLabel>
+            )}
             <Grid container justifyContent="space-between">
               <Grid item md={2}>
                 <TextField
@@ -1073,15 +1386,10 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                   }}
                 />
               </Grid>
-              <Grid item md={4}>
-                {/* <Controller
-                  name="dob"
-                  control={control}
-                  render={({ field }) => (
-                    <> */}
+
+              <Grid item md={3}>
                 <InputLabel className="inputlabel">
                   <b>जन्म दिनांक </b>
-                  {/* <span>*</span> */}
                 </InputLabel>
                 <TextField
                   type="date"
@@ -1089,29 +1397,22 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                   className="textfield"
                   name="dob"
                   value={userDetails?.dob}
-                  onFocus={(event) => {
-                    event.target.showPicker();
+                  onClick={(event) => {
+                    if (event.target.showPicker) {
+                      event.target.showPicker();
+                    }
+                  }}
+                  InputLabelProps={{
+                    shrink: true,
                   }}
                   inputProps={{
                     max: today,
                     min: "1900-01-01",
                   }}
-                  // error={errors.dob}
-                  // {...field}
-                  // onBlur={() => handleBlur("dob")}
-                  // onChange={(e) => {
-                  //   field.onChange(e);
-                  //   handleUserDetails(e);
-                  // }}
-                  onChange={handleUserDetails}
+                  // onChange={handleUserDetails}
+                  onChange={handleDobDetails}
                   size="small"
                 />
-                {/* <FormHelperText sx={{ color: "red" }}>
-                        {errors.dob && errors.dob.message}
-                      </FormHelperText>
-                    </>
-                  )}
-                /> */}
               </Grid>
             </Grid>
             <Grid container mt={1}>
@@ -1127,21 +1428,6 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                           kaashi &gt;&gt; काशी)
                         </b>
                       </InputLabel>
-                      {/* <TextField
-                        fullWidth
-                        className="textfield"
-                        placeholder="आईचे नाव"
-                        name="motherName"
-                        value={userDetails?.motherName}
-                        error={errors.motherName}
-                        {...field}
-                        onBlur={() => handleBlur("motherName")}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleUserDetails(e);
-                        }}
-                        size="small"
-                      /> */}
                       <TransliterationTextField
                         value={userDetails?.motherName}
                         name="motherName"
@@ -1169,6 +1455,7 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                     </>
                   )}
                 />
+
                 <Controller
                   name="motherNameEng"
                   control={control}
@@ -1210,7 +1497,297 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
               </Grid>
             </Grid>
           </Grid>
-
+          <Grid item md={12}>
+            <Grid container spacing={2}>
+              <Grid item md={3}>
+                <Controller
+                  name="dateOfDeath"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      <InputLabel className="inputlabel">
+                        <b>मृत्यू दिनांक </b>
+                        <span>*</span>
+                      </InputLabel>
+                      <TextField
+                        fullWidth
+                        type="date"
+                        className="textfield"
+                        name="dateOfDeath"
+                        value={userDetails?.dateOfDeath}
+                        onFocus={(event) => {
+                          event.target.showPicker();
+                        }}
+                        inputProps={{
+                          max: today,
+                          min: userDetails?.dob
+                            ? userDetails?.dob
+                            : "1900-01-01",
+                        }}
+                        error={errors.dateOfDeath}
+                        {...field}
+                        onBlur={() => handleBlur("dateOfDeath")}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          handleUserDetails(e);
+                        }}
+                        size="small"
+                      />
+                      <FormHelperText sx={{ color: "red" }}>
+                        {errors.dateOfDeath && errors.dateOfDeath.message}
+                      </FormHelperText>
+                    </>
+                  )}
+                />
+              </Grid>
+              <Grid item md={3}>
+                <Controller
+                  name="deathCertificateIssueOfficeDropdown"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      <InputLabel className="inputlabel">
+                        <b>मृत्यू दाखला देणाऱ्या संस्थेचे / कार्यालयाचे नाव </b>
+                        <span>*</span>
+                      </InputLabel>
+                      <Select
+                        name="deathCertificateIssueOfficeDropdown"
+                        fullWidth
+                        className="textfield"
+                        size="small"
+                        value={userDetails?.deathCertificateIssueOfficeDropdown}
+                        error={errors.deathCertificateIssueOfficeDropdown}
+                        {...field}
+                        onBlur={() =>
+                          handleBlur("deathCertificateIssueOfficeDropdown")
+                        }
+                        onChange={(e) => {
+                          field.onChange(e);
+                          handleOfficeNameDetails(e);
+                        }}
+                      >
+                        {Array.isArray(issueOfficeArr) &&
+                          issueOfficeArr.map((val, i) => {
+                            return (
+                              <MenuItem
+                                value={val?.certificate_authority_code}
+                                key={val?.certificate_authority_code + i}
+                              >
+                                {val?.certificate_authority_name}
+                              </MenuItem>
+                            );
+                          })}
+                      </Select>
+                      <FormHelperText sx={{ color: "red" }}>
+                        {errors.deathCertificateIssueOfficeDropdown &&
+                          errors.deathCertificateIssueOfficeDropdown.message}
+                      </FormHelperText>
+                    </>
+                  )}
+                />
+              </Grid>
+              <Grid item md={3}>
+                <Controller
+                  name="deathCertificateNo"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      <InputLabel className="inputlabel">
+                        <b>मृत्यू दाखला क्रमांक </b>
+                        <span>*</span>
+                      </InputLabel>
+                      <TextField
+                        fullWidth
+                        className="textfield"
+                        size="small"
+                        name="deathCertificateNo"
+                        value={userDetails?.deathCertificateNo}
+                        error={errors.deathCertificateNo}
+                        {...field}
+                        onBlur={() => handleBlur("deathCertificateNo")}
+                        onChange={(e) => {
+                          const { name, value } = e.target;
+                          const filteredValue =
+                            filterOnlyLettersNumbersAndSpacesForMryutuDakhlaNo(
+                              value
+                            );
+                          field.onChange(filteredValue);
+                          handleUserDetails({
+                            target: { name, value: filteredValue },
+                          });
+                        }}
+                      />
+                      <FormHelperText sx={{ color: "red" }}>
+                        {errors.deathCertificateNo &&
+                          errors.deathCertificateNo.message}
+                      </FormHelperText>
+                    </>
+                  )}
+                />
+              </Grid>
+              <Grid item md={3}>
+                <Controller
+                  name="dateOfDeathCertificate"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      <InputLabel className="inputlabel">
+                        <b>मृत्यू दाखला दिनांक </b>
+                        <span>*</span>
+                      </InputLabel>
+                      <TextField
+                        fullWidth
+                        type="date"
+                        className="textfield"
+                        name="dateOfDeathCertificate"
+                        value={userDetails?.dateOfDeathCertificate}
+                        onFocus={(event) => {
+                          event.target.showPicker();
+                        }}
+                        inputProps={{
+                          max: today,
+                          // min: "1900-01-01",
+                          min: userDetails?.dateOfDeath,
+                        }}
+                        error={errors.dateOfDeathCertificate}
+                        {...field}
+                        onBlur={() => handleBlur("dateOfDeathCertificate")}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          handleUserDetails(e);
+                        }}
+                        size="small"
+                      />
+                      <FormHelperText sx={{ color: "red" }}>
+                        {errors.dateOfDeathCertificate &&
+                          errors.dateOfDeathCertificate.message}
+                      </FormHelperText>
+                    </>
+                  )}
+                />
+              </Grid>
+              <Grid item md={3}>
+                <InputLabel className="inputlabel">
+                  <b>मृत्यू दाखला </b>
+                  <span>*</span>
+                </InputLabel>
+                <TextField
+                  className="textfieldDisabled"
+                  fullWidth
+                  disabled
+                  value={uploadDoc?.docName ? uploadDoc?.docName : ""}
+                  size="small"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          size="small"
+                          variant="contained"
+                          component="label"
+                          startIcon={<img src="/images/pdflogo.svg" />}
+                        >
+                          अपलोड करा
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            hidden
+                            onChange={handleUploadDocument}
+                          />
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                {/* <FormHelperText sx={{ color: "red" }}>
+                            {uploadDocError && uploadDocError}
+                          </FormHelperText> */}
+                {uploadDocError ? (
+                  <p style={{ color: "red", fontSize: "13px", marginTop: 3 }}>
+                    {uploadDocError}
+                  </p>
+                ) : (
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      marginTop: 3,
+                    }}
+                  >
+                    अपलोड मृत्यू दाखल्याची साइज जास्तीत जास्त 2 MB असावी व ती
+                    PDF स्वरूपात असावी.
+                  </p>
+                )}
+              </Grid>
+              <Grid item md={3}>
+                <InputLabel className="inputlabel">
+                  <b>मृत्यूपत्राचे प्रोबेट केलेले आहे का ?</b>
+                </InputLabel>
+                <RadioGroup row onChange={handleProbet} value={radioProbet}>
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio />}
+                    label="होय"
+                  />
+                  <FormControlLabel
+                    value="no"
+                    control={<Radio />}
+                    label="नाही"
+                  />
+                </RadioGroup>
+              </Grid>
+              {radioProbet == "yes" && (
+                <Grid item md={3}>
+                  <InputLabel className="inputlabel">
+                    <b>प्रोबेटची प्रत </b>
+                    <span>*</span>
+                  </InputLabel>
+                  <TextField
+                    className="textfieldDisabled"
+                    fullWidth
+                    disabled
+                    value={
+                      uploadDocProbet?.docName ? uploadDocProbet?.docName : ""
+                    }
+                    size="small"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button
+                            size="small"
+                            variant="contained"
+                            component="label"
+                            startIcon={<img src="/images/pdflogo.svg" />}
+                          >
+                            अपलोड करा
+                            <input
+                              type="file"
+                              accept="application/pdf"
+                              hidden
+                              onChange={handleUploadProbetDocument}
+                            />
+                          </Button>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  {uploadDocProbetError ? (
+                    <p style={{ color: "red", fontSize: "13px", marginTop: 3 }}>
+                      {uploadDocProbetError}
+                    </p>
+                  ) : (
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        marginTop: 3,
+                      }}
+                    >
+                      अपलोड प्रोबेट साइज जास्तीत जास्त 2 MB असावी व ती PDF
+                      स्वरूपात असावी.
+                    </p>
+                  )}
+                </Grid>
+              )}
+            </Grid>
+          </Grid>
           <Grid item md={12}>
             <Grid container spacing={2}>
               <Grid item md={3}>
@@ -1227,34 +1804,46 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
               </Grid>
               <Grid item md={3}>
                 <InputLabel className="inputlabel">
-                  <b>भाडेपट्टा देणाऱ्याच्या नावे क्षेत्र (चौ.मी.)</b>
+                  <b>
+                    मृत्यूपत्र/इच्छापत्र करून देणाऱ्याच्या नावे क्षेत्र (चौ.मी.)
+                  </b>
                 </InputLabel>
-                <TextField
-                  fullWidth
-                  type="text"
-                  inputProps={{
-                    maxLength: 10,
-                    inputMode: "decimal",
-                    onInput: (e) => {
-                      const value = e.target.value;
-                      const regex = /^\d*\.?\d{0,2}$/;
-                      if (!regex.test(value)) {
-                        e.target.value =
-                          value.match(/^\d*\.?\d{0,2}/)?.[0] || "";
-                      }
-                    },
-                  }}
-                  size="small"
-                  className={
-                    milkat != "land" ? "textfieldDisabled" : "textfield"
-                  }
-                  value={milkat != "land" ? actualArea : availableArea}
-                  disabled={milkat != "land"}
-                  onChange={(e) => {
-                    setAvailableArea(e?.target?.value);
-                    setMutationArea(e?.target?.value);
-                  }}
-                />
+                {isEdit ? (
+                  <TextField
+                    fullWidth
+                    className="textfieldDisabled"
+                    size="small"
+                    disabled
+                    value={actualDharakArea}
+                  />
+                ) : (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="text"
+                    inputProps={{
+                      maxLength: 10,
+                      inputMode: "decimal",
+                      onInput: (e) => {
+                        const value = e.target.value;
+                        const regex = /^\d*\.?\d{0,2}$/;
+                        if (!regex.test(value)) {
+                          e.target.value =
+                            value.match(/^\d*\.?\d{0,2}/)?.[0] || "";
+                        }
+                      },
+                    }}
+                    className={
+                      milkat != "land" ? "textfieldDisabled" : "textfield"
+                    }
+                    value={milkat != "land" ? actualArea : actualDharakArea}
+                    disabled={milkat != "land"}
+                    onChange={(e) => {
+                      setActualDharakArea(e?.target?.value);
+                      setMutationArea(e?.target?.value);
+                    }}
+                  />
+                )}
               </Grid>
               <Grid item md={3}>
                 <InputLabel className="inputlabel">
@@ -1265,66 +1854,80 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                     value="yes"
                     control={<Radio />}
                     label="होय"
-                    disabled={milkat != "land"}
+                    disabled={milkat != "land" || isEdit}
                   />
                   <FormControlLabel
                     value="no"
                     control={<Radio />}
                     label="नाही"
-                    disabled={milkat != "land"}
+                    disabled={milkat != "land" || isEdit}
                   />
                 </RadioGroup>
               </Grid>
-              <Grid item md={3}>
-                {radio == "yes" ? (
-                  <>
-                    <InputLabel className="inputlabel">
-                      <b>भाडेपट्टा दिलेले क्षेत्र (चौ.मी.)</b>
-                    </InputLabel>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      value={milkat != "land" ? actualArea : availableArea}
-                      disabled
-                      className="textfieldDisabled"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <InputLabel className="inputlabel">
-                      <b>भाडेपट्टा दिलेले क्षेत्र (चौ.मी.) </b>
-                    </InputLabel>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="text"
-                      inputProps={{
-                        maxLength: 10,
-                        inputMode: "decimal",
-                        onInput: (e) => {
-                          const value = e.target.value;
-                          const regex = /^\d*\.?\d{0,2}$/;
-                          if (!regex.test(value)) {
-                            e.target.value =
-                              value.match(/^\d*\.?\d{0,2}/)?.[0] || "";
-                          }
-                        },
-                      }}
-                      className="textfield"
-                      value={mutationArea}
-                      onChange={handleMutationArea}
-                      name="mutationArea"
-                    />
-                  </>
-                )}
-              </Grid>
+              {isEdit ? (
+                <Grid item md={3}>
+                  <InputLabel className="inputlabel">
+                    <b>मृत्यूपत्र/इच्छापत्र करून दिलेले क्षेत्र (चौ.मी.)</b>
+                  </InputLabel>
+                  <TextField
+                    fullWidth
+                    className="textfieldDisabled"
+                    size="small"
+                    disabled
+                    value={mutationArea}
+                  />
+                </Grid>
+              ) : (
+                <Grid item md={3}>
+                  {radio == "yes" ? (
+                    <>
+                      <InputLabel className="inputlabel">
+                        <b>मृत्यूपत्र/इच्छापत्र करून दिलेले क्षेत्र (चौ.मी.)</b>
+                      </InputLabel>
+                      <TextField
+                        fullWidth
+                        className="textfieldDisabled"
+                        size="small"
+                        value={milkat != "land" ? actualArea : actualDharakArea}
+                        disabled
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <InputLabel className="inputlabel">
+                        <b>मृत्यूपत्र/इच्छापत्र करून दिलेले क्षेत्र (चौ.मी.)</b>
+                      </InputLabel>
+                      <TextField
+                        fullWidth
+                        type="text"
+                        inputProps={{
+                          maxLength: 10,
+                          inputMode: "decimal",
+                          onInput: (e) => {
+                            const value = e.target.value;
+                            const regex = /^\d*\.?\d{0,2}$/;
+                            if (!regex.test(value)) {
+                              e.target.value =
+                                value.match(/^\d*\.?\d{0,2}/)?.[0] || "";
+                            }
+                          },
+                        }}
+                        className="textfield"
+                        size="small"
+                        value={mutationArea}
+                        onChange={handleMutationArea}
+                      />
+                    </>
+                  )}
+                </Grid>
+              )}
             </Grid>
           </Grid>
-
           <Grid item md={12}>
             <UserAddress
-              type="bhadePattaDenar"
+              type="mryutuPatraDenar"
               isReset={isReset}
+              isEdit={isEdit}
               hasSignature={false}
               isIndian={isIndian}
               setIsIndian={setIsIndian}
@@ -1338,13 +1941,15 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
             />
           </Grid>
 
-          <Grid container justifyContent="end" px={2} mt={2}>
+          <Grid container justifyContent="end" mt={2}>
             <Grid item>
               <Button
                 variant="outlined"
                 startIcon={<RotateRightRoundedIcon />}
                 sx={{ mr: 2 }}
-                onClick={handleReset}
+                onClick={() => {
+                  handleReset();
+                }}
               >
                 रीसेट करा
               </Button>
@@ -1352,7 +1957,7 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                 variant="contained"
                 endIcon={<SaveRoundedIcon />}
                 onClick={handleSave}
-                disabled={isMutationUndergoing}
+                disabled={isMutationUndergoing || responseData.length >= 1}
                 sx={{ mr: 2 }}
               >
                 जतन करा
@@ -1363,33 +1968,42 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                 onClick={() => setActiveStep(1)}
                 disabled={responseData.length == 0}
               >
-                भाडेपट्टा घेणाऱ्याची माहिती भरा
+                मृत्यूपत्र / इच्छापत्र घेणाऱ्याची माहिती भरा
               </Button>
             </Grid>
           </Grid>
         </Grid>
       </Paper>
 
+      {/* ------------------------------Mryutupatra denar Table------------------ */}
       <Grid item md={12} mt={3}>
         <TableContainer component={Paper} elevation={5}>
-          <h3 style={{ marginLeft: 20 }}>भाडेपट्टा देणार माहिती तक्ता</h3>
+          <h3 style={{ marginLeft: 20 }}>
+            मृत्यूपत्र / इच्छापत्र करून देणारा माहिती तक्ता
+          </h3>
           <Table>
             <TableHead style={{ backgroundColor: "#F4F4F4" }}>
               <TableRow>
                 <TableCell>अ. क्र.</TableCell>
                 <TableCell>जिल्हा / तालुका / न. भू. कार्यालय / गांव</TableCell>
+                <TableCell>अर्जामधील न.भू.क्र.</TableCell>
                 <TableCell>LR-Property UID</TableCell>
-                <TableCell>अर्जमधील न. भू. क्र.</TableCell>
                 <TableCell>फेरफरसाठी मिळकत</TableCell>
                 <TableCell>अर्जामध्ये नमूद मिळकत</TableCell>
-                <TableCell>भाडेपट्टा देणाराचे नाव</TableCell>
+                <TableCell>मृत्यूपत्र / इच्छापत्र करून देणाराचे नाव</TableCell>
                 <TableCell>उर्फ नाव</TableCell>
-                <TableCell>भाडेपट्टा देणाराचा पत्ता</TableCell>
                 <TableCell>मिळकत पत्रिके प्रमाणे क्षेत्र (चौ.मी.)</TableCell>
                 <TableCell>
-                  भाडेपट्टा देणाऱ्याच्या नावे क्षेत्र (चौ.मी.)
+                  मृत्यूपत्र/इच्छापत्र करून देणाऱ्याच्या नावे क्षेत्र (चौ.मी.)
                 </TableCell>
-                <TableCell>भाडेपट्टा दिलेले क्षेत्र (चौ.मी.)</TableCell>
+                <TableCell>
+                  मृत्यूपत्र/इच्छापत्र करून दिलेले क्षेत्र (चौ.मी.)
+                </TableCell>
+                <TableCell>मृत्यू दिनांक</TableCell>
+                <TableCell>मृत्यू दाखला क्रमांक</TableCell>
+                <TableCell>मृत्यू दाखला दिनांक</TableCell>
+                <TableCell>मृत्यू दाखला</TableCell>
+                <TableCell>मयत धारकाचा पत्ता</TableCell>
                 <TableCell>कृती करा</TableCell>
               </TableRow>
             </TableHead>
@@ -1404,25 +2018,48 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                         {applicationData?.taluka_name} /{" "}
                         {applicationData?.village_name}
                       </TableCell>
-                      <TableCell>{val?.userDetails?.lrPropertyUID}</TableCell>
                       <TableCell>{val?.userDetails?.nabhu}</TableCell>
-
+                      <TableCell>{val?.userDetails?.lrPropertyUID}</TableCell>
                       <TableCell>
                         {val?.userDetails?.milkat == "land"
-                          ? "भूखंड / जमीन (प्लॉट)"
+                          ? " भूखंड / जमीन (प्लॉट)"
                           : "अपार्टमेंट"}
                       </TableCell>
                       <TableCell>{val?.userDetails?.namud}</TableCell>
-                      <TableCell>
-                        {val?.userDetails?.firstName}{" "}
-                        {val?.userDetails?.middleName}{" "}
-                        {val?.userDetails?.lastName}
-                      </TableCell>
+                      <TableCell>{val?.userDetails?.userName}</TableCell>
                       <TableCell>
                         {val?.userDetails?.aliceName
                           ? val?.userDetails?.aliceName
                           : "-"}
                       </TableCell>
+                      <TableCell>{val?.areaForMutation?.actualArea}</TableCell>
+                      <TableCell>
+                        {val?.areaForMutation?.actualDharakArea
+                          ? val?.areaForMutation?.actualDharakArea
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {val?.areaForMutation?.mutationArea
+                          ? val?.areaForMutation?.mutationArea
+                          : "-"}
+                      </TableCell>
+                      <TableCell>{val?.userDetails?.dateOfDeath}</TableCell>
+                      <TableCell>
+                        {val?.userDetails?.deathCertificateNo}
+                      </TableCell>
+                      <TableCell>
+                        {val?.userDetails?.dateOfDeathCertificate}
+                      </TableCell>
+                      <TableCell>
+                        <a
+                          href={val?.docUpload?.docSrc}
+                          target="_blank"
+                          download={val?.docUpload?.docName}
+                        >
+                          {val?.docUpload?.docName}
+                        </a>
+                      </TableCell>
+
                       <TableCell>
                         <Button
                           variant="outlined"
@@ -1430,21 +2067,6 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                         >
                           पत्ता पहा
                         </Button>
-                      </TableCell>
-                      <TableCell>
-                        {val?.areaForMutation?.actualArea
-                          ? val?.areaForMutation?.actualArea
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {val?.areaForMutation?.availableArea
-                          ? val?.areaForMutation?.availableArea
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {val?.areaForMutation?.mutationArea
-                          ? val?.areaForMutation?.mutationArea
-                          : "-"}
                       </TableCell>
                       <TableCell>
                         <IconButton
@@ -1464,8 +2086,9 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
         </TableContainer>
       </Grid>
 
+      {/* ------------------------------Mryutupatra ghenar Table------------------ */}
       {ghenarData.length > 0 && (
-        <Grid item md={12} mt={3}>
+        <Grid item md={12} mt={2}>
           <TableContainer component={Paper} elevation={5}>
             <div
               style={{
@@ -1476,12 +2099,14 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                 paddingRight: 20,
               }}
             >
-              <h3 style={{ marginLeft: 20 }}>भाडेपट्टा घेणारा माहिती तक्ता</h3>
+              <h3 style={{ marginLeft: 20 }}>
+                मृत्यूपत्र / इच्छापत्र लाभार्थी माहिती तक्ता
+              </h3>
               <Button
                 onClick={() => setActiveStep(1)}
                 endIcon={<ArrowForwardRoundedIcon />}
               >
-                आणखी भाडेपट्टा घेणाऱ्याची माहिती भरा
+                आणखी मृत्यूपत्र / इच्छापत्र लाभार्थी माहिती भरा
               </Button>
             </div>
             <Table>
@@ -1491,15 +2116,17 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                   <TableCell>
                     जिल्हा / तालुका / न. भू. कार्यालय / गांव
                   </TableCell>
-                  <TableCell>भाडेपट्टा घेणाऱ्याचा प्रकार</TableCell>
-                  <TableCell>भाडेपट्टा घेणाऱ्याचे नाव</TableCell>
+                  <TableCell>
+                    मृत्यूपत्र / इच्छापत्र लाभार्थीचा प्रकार
+                  </TableCell>
+                  <TableCell>मृत्यूपत्र / इच्छापत्र लाभार्थीचे नाव</TableCell>
                   <TableCell>उर्फ नाव</TableCell>
                   <TableCell>धारक प्रकार</TableCell>
                   <TableCell>स्त्री /पुरुष</TableCell>
                   <TableCell>अ.पा.क/ ए.कू.मॅ.</TableCell>
-                  <TableCell>अ.पा.क</TableCell>
                   <TableCell>जन्म दिनांक</TableCell>
-                  <TableCell>भाडेपट्टा घेणाराचा पत्ता</TableCell>
+                  <TableCell>अ.पा.क</TableCell>
+                  <TableCell>लाभार्थीचा पत्ता</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1513,46 +2140,42 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
                           {applicationData?.taluka_name} /{" "}
                           {applicationData?.village_name}
                         </TableCell>
-                        <TableCell>{val?.usertype}</TableCell>
+                        <TableCell>{val?.userType}</TableCell>
+                        <TableCell>{val?.fullNameInMarathi}</TableCell>
                         <TableCell>
-                          {val?.usertype == "व्यक्ती"
-                            ? val?.fullNameInMarathi
-                            : val?.companyName}
-                        </TableCell>
-
-                        <TableCell>
-                          {val?.usertype == "व्यक्ती"
-                            ? val?.userDetails?.aliceName
+                          {val?.dharak?.userdharak?.aliceName
+                            ? val?.dharak?.userdharak?.aliceName
                             : "-"}
                         </TableCell>
                         <TableCell>
-                          {val?.usertype == "व्यक्ती"
+                          {val?.userType == "व्यक्ती"
                             ? val?.dharak?.userdharak?.holderType
                                 ?.owner_status_description
                             : val?.dharak?.companydharak?.holderType
                                 ?.owner_status_description}
                         </TableCell>
                         <TableCell>
-                          {val?.usertype == "व्यक्ती"
+                          {val?.userType == "व्यक्ती"
                             ? val?.dharak?.userdharak?.gender
                                 ?.gender_description
                             : "-"}
                         </TableCell>
                         <TableCell>
-                          {val?.usertype == "व्यक्ती"
-                            ? val?.dharak?.userdharak?.aapakDropdown
+                          {val?.dharak?.companydharak?.aapak
+                            ? val?.dharak?.companydharak?.aapakDropdown
                                 ?.apk_description
+                            : val?.dharak?.userdharak?.aapakDropdown
+                                ?.apk_description}
+                        </TableCell>
+                        <TableCell>
+                          {val?.dharak?.userdharak?.dob
+                            ? val?.dharak?.userdharak?.dob
                             : "-"}
                         </TableCell>
                         <TableCell>
-                          {val?.usertype == "व्यक्ती"
-                            ? val?.dharak?.userdharak?.aapak
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {val?.usertype == "व्यक्ती"
-                            ? val?.userDetails?.dob
-                            : "-"}
+                          {val?.dharak?.companydharak?.aapak
+                            ? val?.dharak?.companydharak?.aapak
+                            : val?.dharak?.userdharak?.aapak}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -1570,48 +2193,8 @@ const BhadePattaDenar = ({ setActiveStep, applicationData }) => {
           </TableContainer>
         </Grid>
       )}
-
-      {bhadepattaMahitiData && Object.keys(bhadepattaMahitiData).length > 0 && (
-        <Grid item md={12} mt={3}>
-          <TableContainer component={Paper} elevation={5}>
-            <h3 style={{ marginLeft: 20 }}>भाडेपट्टा माहिती तक्ता</h3>
-            <Table>
-              <TableHead style={{ backgroundColor: "#F4F4F4" }}>
-                <TableRow>
-                  <TableCell>अ. क्र.</TableCell>
-                  <TableCell>भाडेपट्टा कालावधी वर्ष व महीने</TableCell>
-                  <TableCell>भाडेपट्टा दिनांक पासून</TableCell>
-                  <TableCell>भाडेपट्टा दिनांक पर्यंत</TableCell>
-                  <TableCell>भाडेपट्ट्याची रक्कम (रु.)</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {bhadepattaMahitiData &&
-                  Object.keys(bhadepattaMahitiData).length > 0 && (
-                    <TableRow>
-                      <TableCell>1</TableCell>
-                      <TableCell>
-                        {responseData?.bhadepattaTenureYear} वर्ष{" "}
-                        {responseData?.bhadepattaTenureMonth} महीने
-                      </TableCell>
-                      <TableCell>
-                        {bhadepattaMahitiData?.bhadepattaFromDate}
-                      </TableCell>
-                      <TableCell>
-                        {bhadepattaMahitiData?.bhadepattaToDate}
-                      </TableCell>
-                      <TableCell>
-                        {bhadepattaMahitiData?.bhadepattaAmount}
-                      </TableCell>
-                    </TableRow>
-                  )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
-      )}
     </>
   );
 };
 
-export default BhadePattaDenar;
+export default MryutuPatraDenar;

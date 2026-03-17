@@ -73,7 +73,7 @@ function App() {
     return loggedUser && role ? children : <Navigate to="/admin_login" />;
   };
 
-  useEffect(() => {
+ useEffect(() => {
     const allowedDomains = [
       // "localhost",
       // "115.124.105.111",

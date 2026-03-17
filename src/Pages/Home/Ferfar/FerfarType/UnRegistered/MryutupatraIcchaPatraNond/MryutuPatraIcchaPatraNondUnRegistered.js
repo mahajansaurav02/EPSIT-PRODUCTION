@@ -1,23 +1,23 @@
 import React, { useState } from "react";
 import { Box, Grid, Step, StepButton, Stepper } from "@mui/material";
-import BhadePattaDenar from "./SupportPages/BhadePattaDenar";
-import BhadePattaGhenar from "./SupportPages/BhadePattaGhenar";
-import BhadePattaMahiti from "./SupportPages/BhadePattaMahiti";
+import MryutuPatraDenar from "./SupportPages/MryutuPatraDenar";
+import MryutuPatraGhenar from "./SupportPages/MryutuPatraGhenar";
 
-const steps = ["भाडेपट्टा देणार", "भाडेपट्टा घेणार", "भाडेपट्टा माहिती"];
-
-const BhadePattaNond = ({ applicationData }) => {
+const steps = [
+  "मृत्यूपत्र / इच्छापत्र करून देणार",
+  "मृत्यूपत्र / इच्छापत्र लाभार्थी ",
+];
+const MryutuPatraIcchaPatraNondUnRegistered = ({ applicationData }) => {
   const [activeStep, setActiveStep] = useState(0);
 
   const handleStep = (step) => () => {
     setActiveStep(step);
   };
-
   return (
     <>
       <Grid item md={12}>
         <Box sx={{ width: "100%" }}>
-          <Stepper activeStep={activeStep} sx={{ px: "300px" }}>
+          <Stepper activeStep={activeStep} sx={{ px: "400px" }}>
             {steps.map((label, index) => (
               <Step key={label}>
                 <StepButton color="inherit" onClick={handleStep(index)}>
@@ -29,18 +29,14 @@ const BhadePattaNond = ({ applicationData }) => {
           <div style={{ marginTop: 10 }}>
             <React.Fragment>
               {activeStep == 0 && (
-                <BhadePattaDenar
+                <MryutuPatraDenar
                   setActiveStep={setActiveStep}
                   applicationData={applicationData}
                 />
               )}
               {activeStep == 1 && (
-                <BhadePattaGhenar
-                  setActiveStep={setActiveStep}
-                  applicationData={applicationData}
-                />
+                <MryutuPatraGhenar applicationData={applicationData} />
               )}
-              {activeStep == 2 && <BhadePattaMahiti />}
             </React.Fragment>
           </div>
         </Box>
@@ -49,4 +45,4 @@ const BhadePattaNond = ({ applicationData }) => {
   );
 };
 
-export default BhadePattaNond;
+export default MryutuPatraIcchaPatraNondUnRegistered;

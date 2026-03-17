@@ -108,6 +108,7 @@ const UserDashboard = () => {
           office_code: dates?.taluka,
         },
         (res) => {
+          console.log(res?.ResponseData, "check------------response")
           setTableData(res?.ResponseData);
           setIsTableDataLoading(false);
         },
@@ -131,7 +132,14 @@ const UserDashboard = () => {
           office_code: dates?.taluka,
         },
         (res) => {
-          setMutationCountData(res?.ResponseData);
+          console.log(res, "mutation_---------data");
+
+          const filteredData = res?.ResponseData?.filter(
+            (item) =>
+              item.MutationName !== "गहाण खतानुसार तारण परत/ बोजा कमी करणे नोंद"
+          );
+
+          setMutationCountData(filteredData);
           setIsMutationCountLoading(false);
         },
         (err) => {

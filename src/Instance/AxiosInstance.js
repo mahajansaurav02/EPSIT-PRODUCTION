@@ -40,7 +40,7 @@ const AxiosInstance = () => {
     return encryptedData;
   };
 
-  const decryptData = (encryptedData, base64Key, base64IV) => {
+  const decryptData = (encryptedData, base64Key, base64IV,url) => {
     try {
       const key = forge.util.decode64(base64Key);
       const iv = forge.util.decode64(base64IV);
@@ -80,6 +80,8 @@ const AxiosInstance = () => {
             }
           );
         }
+
+        console.log(data,"check dataaa",url)
         return data;
       } else {
         throw new Error("Decryption failed");
@@ -93,6 +95,8 @@ const AxiosInstance = () => {
   const sendRequest = useCallback(
     async (url, type = "GET", reqData, callback, errorCallback) => {
       if (type === "POST") {
+
+        console.log(reqData, "check req dataaa==============");
         await axios
           .post(
             url,
@@ -112,7 +116,7 @@ const AxiosInstance = () => {
               decryptData(
                 response?.data,
                 "6XhX8NxtWrlC/NbK3GXoh3TtH9UUt8KmgcuUG0RFEJM=",
-                "t0tOwviXTieE5SZoh9/hzw=="
+                "t0tOwviXTieE5SZoh9/hzw==",url
               )
             );
           })
