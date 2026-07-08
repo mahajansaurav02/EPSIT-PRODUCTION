@@ -79,7 +79,7 @@ const ComponentToPrint = React.forwardRef(({ props, applicationData }, ref) => (
               {props?.registereduser?.mname_in_marathi}{" "}
               {props?.registereduser?.lname_in_marathi} श्री/श्रीमती &nbsp;
               {props?.registereduser?.mname_in_marathi}{" "}
-              {props?.registereduser?.lname_in_marathi} यांचा मुलगा/मुलगी वय ---
+              {props?.registereduser?.lname_in_marathi} यांचा मुलगा/मुलगी/पती/पत्नी वय ---
               वर्ष, राहणार &nbsp;
               {props?.registereduser?.address_type == "INDIA" ? (
                 <>
