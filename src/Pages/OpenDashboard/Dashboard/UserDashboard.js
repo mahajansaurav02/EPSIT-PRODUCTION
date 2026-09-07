@@ -1,337 +1,227 @@
 import {
   AppBar,
-  Button,
   CircularProgress,
-  Container,
-  FormHelperText,
-  Grid,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
-  TextField,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Table,
+  TableBody,
+  Box
 } from "@mui/material";
-import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
+import React, { useEffect, useState } from "react";
 import RegistrationInstance from "../../../Instance/RegisterInstance";
 import URLS from "../../../URLs/url";
 import { errorToast, Toast } from "../../../ui/Toast";
-import ReactApexChart from "react-apexcharts";
-import ApplicationTable from "./OpenApplicationTable";
-import {
-  districtValidationSchema,
-  talukaValidationSchema,
-} from "../../../Validations/yupValidations";
 import Header from "../../../ui/Header";
 
-const UserDashboard = () => {
+const Dashboard = () => {
   const { sendRequest } = RegistrationInstance();
-  const today = new Date().toISOString().split("T")[0];
-  const [dates, setDates] = useState({
-    fromDate: today,
-    toDate: today,
-    division: 0,
-    district: 0,
-    taluka: 0,
-  });
-  const [isTableDataLoading, setIsTableDataLoading] = useState(null);
-  const [isMutationCountLoading, setIsMutationCountLoading] = useState(null);
 
-  const [tableData, setTableData] = useState({});
-  const [mutationCountData, setMutationCountData] = useState([]);
+  const [officeData, setOfficeData] = useState([]);
+  const [newDashboardData, setNewDashboardData] = useState([]);
 
-  const [division, setDivision] = useState([]);
-  const [district, setDistrict] = useState([]);
-  const [taluka, setTaluka] = useState([]);
+  const [expandedDivision, setExpandedDivision] = useState(null);
+  const [expandedDistrict, setExpandedDistrict] = useState(null);
+  const [expandedOffice, setExpandedOffice] = useState(null);
 
-  const handleUserDetails = (e) => {
-    const { name, value } = e?.target;
-    setDates({ ...dates, [name]: value });
-    setIsTableDataLoading(null);
-    setIsMutationCountLoading(null);
-  };
+  const [loadingDivision, setLoadingDivision] = useState(false);
+  const [loadingDistrict, setLoadingDistrict] = useState(false);
+  const [loadingOffice, setLoadingOffice] = useState(false);
+  const [loadingMutation, setLoadingMutation] = useState(false);
 
-  const {
-    control,
-    trigger,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm({
-    resolver: yupResolver(
-      yup.object().shape({
-        fromDate: yup.string().required("पासून दिनांक निवडा"),
-        toDate: yup.string().required("पर्यन्त दिनांक निवडा"),
-        division: yup.string().required("विभाग निवडा"),
-        district: districtValidationSchema,
-        taluka: talukaValidationSchema,
-      })
-    ),
-    defaultValues: {
-      fromDate: today,
-      toDate: today,
-      division: "0",
-      district: "0",
-      taluka: "0",
-    },
-  });
+  const [divisionData, setDivisionData] = useState([]);
+  const [districtData, setDistrictData] = useState([]);
 
-  const handleBlur = async (name) => {
-    await trigger(name);
-  };
-
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
-  const search = async () => {
-    const result = await trigger();
-    if (result) {
-      setIsTableDataLoading(true);
-      setIsMutationCountLoading(true);
-      sendRequest(
-        `${URLS?.BaseURL}/EPCISAPIS/GetCountOfApplicationId`,
-        "POST",
-        {
-          pageno: 0,
-          pagesize: 0,
-          fromDate: dates?.fromDate,
-          toDate: dates?.toDate,
-          region_code: dates?.division.toString(),
-          district_code: dates?.district.toString(),
-          office_code: dates?.taluka,
-        },
-        (res) => {
-          console.log(res?.ResponseData, "check------------response")
-          setTableData(res?.ResponseData);
-          setIsTableDataLoading(false);
-        },
-        (err) => {
-          errorToast(err?.Message);
-          setTableData({});
-          setIsTableDataLoading(false);
-        }
-      );
-
-      sendRequest(
-        `${URLS?.BaseURL}/EPCISAPIS/GetCountOfMutations`,
-        "POST",
-        {
-          pageno: 0,
-          pagesize: 0,
-          fromDate: dates?.fromDate,
-          toDate: dates?.toDate,
-          region_code: dates?.division.toString(),
-          district_code: dates?.district.toString(),
-          office_code: dates?.taluka,
-        },
-        (res) => {
-          console.log(res, "mutation_---------data");
-
-          const filteredData = res?.ResponseData?.filter(
-            (item) =>
-              item.MutationName !== "गहाण खतानुसार तारण परत/ बोजा कमी करणे नोंद"
-          );
-
-          setMutationCountData(filteredData);
-          setIsMutationCountLoading(false);
-        },
-        (err) => {
-          setIsMutationCountLoading(false);
-          errorToast(err?.Message);
-        }
-      );
-    } else {
-      errorToast("Please Check All Fields !");
-    }
-  };
-
-  const handleDivision = async (e) => {
-    const { name, value } = e?.target;
-    if (value === 0) {
-      setDates({ ...dates, division: 0, district: 0, taluka: 0 });
-    }
-    setDates({ ...dates, division: value });
-    setTaluka([]);
-    setIsTableDataLoading(null);
-    setIsMutationCountLoading(null);
+  const loadHierarchy = ({
+    type,
+    code,
+    loadingSetter,
+    dataSetter,
+    onSuccess,
+  }) => {
+    loadingSetter(true);
 
     sendRequest(
-      `${URLS?.BaseURL}/EPCISAPIS/GetDistrictByRegion`,
+      `${URLS.BaseURL}/EPCISAPIS/getDashboardMetrics`,
       "POST",
-      e?.target?.value.toString(),
-      (res) => {
-        setDistrict(JSON.parse(res?.ResponseData));
-      },
-      (err) => {
-        errorToast(err?.Message);
-      }
-    );
-  };
-
-  const handleDistrict = async (e) => {
-    const { name, value } = e?.target;
-    if (value === 0) {
-      setDates({ ...dates, district: 0, taluka: 0 });
-      setTaluka([]);
-    }
-    setDates({ ...dates, district: value });
-    setIsTableDataLoading(null);
-    setIsMutationCountLoading(null);
-
-    sendRequest(
-      `${URLS?.BaseURL}/EPCISAPIS/getOfficeByDistrict`,
-      "POST",
-      e?.target?.value.toString(),
-      (res) => {
-        setTaluka(JSON.parse(res?.ResponseData));
-      },
-      (err) => {
-        errorToast(err?.Message);
-      }
-    );
-  };
-
-  const handleTaluka = (e) => {
-    const { name, value } = e?.target;
-    setDates({ ...dates, taluka: value });
-    setIsTableDataLoading(null);
-    setIsMutationCountLoading(null);
-  };
-
-  //---------------------------Chart---------------------
-
-  const labels = mutationCountData.map((item) => item.MutationName);
-
-  const series = mutationCountData.map((item) =>
-    item.Statuses.reduce((total, status) => total + status.CountOfMutation, 0)
-  );
-
-  const donutOptions = {
-    chart: {
-      type: "pie",
-      toolbar: {
-        show: true,
-        tools: {
-          download: true,
-        },
-      },
-    },
-    title: {
-      text: `${formatDate(dates?.fromDate)} पासून ${formatDate(
-        dates?.toDate
-      )} पर्यंत भरलेले फेरफार.`,
-    },
-    labels,
-    legend: {
-      position: "right",
-    },
-    fill: {
-      type: "gradient",
-      gradient: {
-        shade: "light",
-        type: "diagonal1",
-        shadeIntensity: 0.5,
-        gradientToColors: undefined,
-        inverseColors: true,
-        opacityFrom: 0.7,
-        opacityTo: 1,
-        stops: [0, 100],
-      },
-    },
-    responsive: [
       {
-        breakpoint: 768,
-        options: {
-          chart: { width: "100%" },
-          legend: { position: "bottom" },
-        },
+        type,
+        code: String(code),
       },
-    ],
-  };
-
-  const statusSet = new Set();
-  mutationCountData.forEach((item) => {
-    item.Statuses.forEach((status) => {
-      statusSet.add(status.ApplicationStatus);
-    });
-  });
-  const uniqueStatuses = Array.from(statusSet);
-
-  const seriesMutationCount = uniqueStatuses.map((status) => {
-    return {
-      name: status,
-      data: mutationCountData.map((item) => {
-        const found = item.Statuses.find((s) => s.ApplicationStatus === status);
-        return found ? found.CountOfMutation : 0;
-      }),
-    };
-  });
-
-  const statusColorMap = {
-    "Partially Submitted / Pending": "orange",
-    "Inward Number Error": "red",
-    "Application is submitted to EPCIS": "green",
-    "Application Processed by EPCIS": "blue",
-  };
-
-  const colors = uniqueStatuses.map(
-    (status) => statusColorMap[status] || "gray"
-  );
-
-  const categories = mutationCountData.map((item) => item.MutationName);
-
-  const mutationCountBarOptions = {
-    chart: {
-      type: "bar",
-      stacked: true,
-      height: 350,
-    },
-    title: {
-      text: `${formatDate(dates?.fromDate)} पासून ${formatDate(
-        dates?.toDate
-      )} पर्यंत फेरफार प्रकार प्रमाणे.`,
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-      },
-    },
-    xaxis: {
-      categories: categories,
-    },
-    legend: {
-      position: "top",
-    },
-    series: series,
-    colors: colors,
-  };
-
-  //---------------------Chart------------------------------
-
-  const getRegion = async () => {
-    sendRequest(
-      `${URLS?.BaseURL}/EPCISAPIS/GetRegion`,
-      "POST",
-      null,
       (res) => {
-        setDivision(JSON.parse(res?.ResponseData));
+        const response =
+          res?.ResponseData?.ePCISgetDashboardMetricsResponse || [];
+
+        // console.log(`${type} Response:`, res);
+        // console.log(`${type} Data:`, res?.ResponseData?.ePCISgetDashboardMetricsResponse);
+
+        dataSetter(response);
+
+        if (onSuccess) {
+          onSuccess(response);
+        }
+
+        loadingSetter(false);
       },
       (err) => {
-        errorToast(err?.Message);
+        loadingSetter(false);
+        errorToast(
+          err?.Message ||
+          err?.message ||
+          "Something went wrong while loading dashboard data"
+        );
       }
     );
   };
+
+  const handleGetDivision = () => {
+    loadHierarchy({
+      type: "DIVISIONS",
+      code: "9999",
+      loadingSetter: setLoadingDivision,
+      dataSetter: setDivisionData,
+    });
+  };
+
+  const handleDivisionClick = (division) => {
+    const divisionCode = division.divisioncode;
+
+    if (expandedDivision === divisionCode) {
+      setExpandedDivision(null);
+      setExpandedDistrict(null);
+      setExpandedOffice(null);
+      setDistrictData([]);
+      setOfficeData([]);
+      setNewDashboardData([]);
+
+      return;
+    }
+
+    setExpandedDivision(divisionCode);
+
+    setExpandedDistrict(null);
+    setExpandedOffice(null);
+    setDistrictData([]);
+    setOfficeData([]);
+    setNewDashboardData([]);
+
+    loadHierarchy({
+      type: "DISTRICTS",
+      code: divisionCode,
+      loadingSetter: setLoadingDistrict,
+      dataSetter: setDistrictData,
+
+    });
+  };
+
+  const handleDistrictClick = (district) => {
+    const districtCode = district.districtcode;
+
+    if (expandedDistrict === districtCode) {
+      setExpandedDistrict(null);
+      setExpandedOffice(null);
+
+      setOfficeData([]);
+      setNewDashboardData([]);
+
+      return;
+    }
+
+    setExpandedDistrict(districtCode);
+
+    setExpandedOffice(null);
+    setNewDashboardData([]);
+    setOfficeData([]);
+
+    loadHierarchy({
+      type: "OFFICES",
+      code: districtCode,
+      loadingSetter: setLoadingOffice,
+      dataSetter: setOfficeData,
+    });
+  };
+
+  const handleOfficeClick = (division, district, office) => {
+    if (expandedOffice === office.officecode) {
+      setExpandedOffice(null);
+      setNewDashboardData([]);
+      return;
+    }
+
+    setExpandedOffice(office.officecode);
+
+    getDashboardData(
+      division.divisioncode,
+      district.districtcode,
+      office.officecode
+    );
+  };
+
+  const getDashboardData = (regionCode, districtCode, officeCode) => {
+    setLoadingMutation(true)
+    const payload = {
+      region_code: String(regionCode),
+      district_code: String(districtCode),
+      office_code: String(officeCode),
+    };
+    sendRequest(
+      `${URLS.BaseURL}/EPCISAPIS/GetCountOfMutationsForNewDashboard`,
+      "POST",
+      payload,
+      (res) => {
+        // console.log(res, "res")
+        setNewDashboardData(res.ResponseData);
+        setLoadingMutation(false)
+      },
+      (err) => {
+        errorToast(err.Message)
+        setLoadingMutation(false)
+      });
+  };
+
+  const divisionTotals = React.useMemo(() => {
+    return divisionData.reduce(
+      (acc, item) => {
+        acc.created += Number(item.totalCreatedApplicationCount || 0);
+        acc.inward += Number(item.total_inward || 0);
+        acc.pendingMS += Number(item.pending_at_ms_inward || 0);
+        acc.pendingCTSO += Number(item.pending_at_ctso_inward || 0);
+        acc.disposed += Number(item.disposed_inward || 0);
+
+        return acc;
+      },
+      {
+        created: 0,
+        inward: 0,
+        pendingMS: 0,
+        pendingCTSO: 0,
+        disposed: 0,
+      }
+    );
+  }, [divisionData]);
+
+  const TableLoader = ({ height = 100 }) => (
+    <TableRow>
+      <TableCell colSpan={7} sx={{ p: 0 }}>
+        <Box
+          sx={{
+            height,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            bgcolor: "#FAFAFA",
+          }}
+        >
+          <CircularProgress size={35} />
+        </Box>
+      </TableCell>
+    </TableRow>
+  );
 
   useEffect(() => {
-    getRegion();
-    search();
+    handleGetDivision();
   }, []);
 
   return (
@@ -340,332 +230,426 @@ const UserDashboard = () => {
       <AppBar position="fixed" color="default">
         <Header showSignInBtn={true} />
       </AppBar>
-      <Container>
-        <Grid container spacing={2}>
-          <Grid item md={12}>
-            <Grid container spacing={2}>
-              <Grid item md={2.4}>
-                <Controller
-                  name="division"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      <InputLabel className="inputlabel">
-                        <b>विभाग </b>
-                        <span>*</span>
-                      </InputLabel>
-                      <Select
-                        fullWidth
-                        size="small"
-                        value={dates?.division}
-                        className="textfield"
-                        error={errors.division}
-                        {...field}
-                        displayEmpty
-                        onBlur={() => handleBlur("division")}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleDivision(e);
-                        }}
-                      >
-                        <MenuItem value={0}>संपूर्ण महाराष्ट्र</MenuItem>
-                        {Array.isArray(division) &&
-                          division
-                            .filter((v) => v.region_code !== 7)
-                            .map((val, i) => {
-                              return (
-                                <MenuItem
-                                  key={val?.region_code + i}
-                                  value={val?.region_code}
+
+      <TableContainer component={Paper} sx={{ width: "100%" }}>
+        <Table
+          stickyHeader
+          sx={{
+            "& .MuiTableCell-root": {
+              borderBottom: "1px solid #e5e7eb",
+              fontSize: "14px",
+            },
+          }}
+        >
+          <TableHead
+            sx={{
+              "& .MuiTableCell-root": {
+                background: "#1565C0",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: "15px",
+                textAlign: "center",
+                whiteSpace: "nowrap",
+                verticalAlign: "middle",
+                lineHeight: 1.4,
+                border: "1px solid rgba(255,255,255,0.2)",
+                py: 1.5,
+              },
+            }}
+          >
+            <TableRow>
+              <TableCell width={80} align="center">Sr No</TableCell>
+              <TableCell align="center">विभाग</TableCell>
+              <TableCell align="center">EPSIT मध्ये प्राप्त एकूण अर्ज</TableCell>
+              <TableCell align="center">ePCIS मध्ये inward एकूण अर्ज</TableCell>
+              <TableCell align="center">परिरक्षण भूमापककडे प्रलंबीत</TableCell>
+              <TableCell align="center">नगर भूमापन अ्धिकारी कडे प्रलंबीत</TableCell>
+              <TableCell align="center">एकूण निकाली अर्ज</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {loadingDivision ? (
+              <TableRow>
+                <TableCell colSpan={7} sx={{ p: 0 }}>
+                  <Box
+                    sx={{
+                      height: 250,
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <CircularProgress size={40} />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : (
+              divisionData.map((division, index) => (
+                <React.Fragment key={division.divisioncode}>
+                  <TableRow
+                    hover
+                    sx={{
+                      cursor: "pointer",
+                      bgcolor: "#E3F2FD",
+                      "& td": {
+                        fontWeight: 700,
+                        fontSize: "15px",
+                      },
+                      "&:hover": {
+                        bgcolor: "#BBDEFB",
+                      },
+                    }}
+                    onClick={() => handleDivisionClick(division)}
+                  >
+                    <TableCell align="center">{index + 1}</TableCell>
+
+                    <TableCell align="center">{division.divisionname}</TableCell>
+
+                    <TableCell align="center">{division.totalCreatedApplicationCount}</TableCell>
+
+                    <TableCell align="center">{division.total_inward}</TableCell>
+
+                    <TableCell align="center">{division.pending_at_ms_inward}</TableCell>
+
+                    <TableCell align="center">{division.pending_at_ctso_inward}</TableCell>
+
+                    <TableCell align="center">{division.disposed_inward}</TableCell>
+                  </TableRow>
+
+                  {expandedDivision === division.divisioncode && loadingDistrict && (
+                    <TableLoader height={100} />
+                  )}
+
+                  {expandedDivision === division.divisioncode &&
+                    !loadingDistrict &&
+                    districtData.map((district, dIndex) => (
+                      <React.Fragment key={district.districtcode}>
+                        <TableRow
+                          hover
+                          sx={{
+                            cursor: "pointer",
+                            bgcolor: "#F5F9FF",
+
+                            "& td": {
+                              fontWeight: 600,
+                            },
+
+                            "&:hover": {
+                              bgcolor: "#E3F2FD",
+                            },
+                          }}
+                          onClick={() => handleDistrictClick(district)}
+                        >
+                          <TableCell align="center">{`${index + 1}.${dIndex + 1}`}</TableCell>
+
+                          <TableCell
+                            sx={{
+                              pl: 6,
+                              borderLeft: "5px solid #42A5F5",
+                            }}
+                            align="center"
+                          >
+                            {district.districtname}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            {district.totalCreatedApplicationCount}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            {district.total_inward}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            {district.pending_at_ms_inward}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            {district.pending_at_ctso_inward}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            {district.disposed_inward}
+                          </TableCell>
+                        </TableRow>
+
+                        {expandedDistrict === district.districtcode && loadingOffice && (
+                          <TableLoader height={100} />
+                        )}
+
+                        {expandedDistrict === district.districtcode &&
+                          !loadingOffice &&
+                          officeData.map((office, oIndex) => (
+                            <React.Fragment key={office.officecode}>
+                              <TableRow
+                                hover
+                                sx={{
+                                  cursor: "pointer",
+                                  bgcolor: "#FFFDF3",
+
+                                  "&:hover": {
+                                    bgcolor: "#FFF3CD",
+                                  },
+                                }}
+                                onClick={() =>
+                                  handleOfficeClick(
+                                    division,
+                                    district,
+                                    office
+                                  )
+                                }
+                              >
+                                <TableCell align="center">
+                                  {`${index + 1}.${dIndex + 1}.${oIndex + 1}`}
+                                </TableCell>
+
+                                <TableCell
+                                  sx={{
+                                    pl: 10,
+                                    borderLeft: "5px solid orange",
+                                  }}
+                                  align="center"
                                 >
-                                  {val?.region_name}
-                                </MenuItem>
-                              );
-                            })}
-                      </Select>
-                      <FormHelperText sx={{ color: "red" }}>
-                        {errors.division && errors.division.message}
-                      </FormHelperText>
-                    </>
-                  )}
-                />
-              </Grid>
-              <Grid item md={2.4}>
-                <Controller
-                  name="district"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      <InputLabel className="inputlabel">
-                        <b>जिल्हा </b>
-                        <span>*</span>
-                      </InputLabel>
-                      <Select
-                        fullWidth
-                        size="small"
-                        value={dates?.district}
-                        className="textfield"
-                        error={errors.district}
-                        {...field}
-                        displayEmpty
-                        onBlur={() => handleBlur("district")}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleDistrict(e);
-                        }}
-                      >
-                        <MenuItem value={0}>संपूर्ण जिल्हे</MenuItem>
-                        {Array.isArray(district) &&
-                          district.map((val, i) => {
-                            return (
-                              <MenuItem
-                                key={val?.district_code + i}
-                                value={val?.district_code}
-                              >
-                                {val?.district_name}
-                              </MenuItem>
-                            );
-                          })}
-                      </Select>
-                      <FormHelperText sx={{ color: "red" }}>
-                        {errors.district && errors.district.message}
-                      </FormHelperText>
-                    </>
-                  )}
-                />
-              </Grid>
-              <Grid item md={2.4}>
-                <Controller
-                  name="taluka"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      <InputLabel className="inputlabel">
-                        <b>तालुका </b>
-                        <span>*</span>
-                      </InputLabel>
-                      <Select
-                        fullWidth
-                        size="small"
-                        value={dates?.taluka}
-                        className="textfield"
-                        error={errors.taluka}
-                        {...field}
-                        displayEmpty
-                        onBlur={() => handleBlur("taluka")}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleTaluka(e);
-                        }}
-                      >
-                        <MenuItem value="0">संपूर्ण तालुके</MenuItem>
-                        {Array.isArray(taluka) &&
-                          taluka.map((val, i) => {
-                            return (
-                              <MenuItem
-                                key={val?.office_code + i}
-                                value={val?.office_code}
-                              >
-                                {val?.office_name}
-                              </MenuItem>
-                            );
-                          })}
-                      </Select>
-                      <FormHelperText sx={{ color: "red" }}>
-                        {errors.taluka && errors.taluka.message}
-                      </FormHelperText>
-                    </>
-                  )}
-                />
-              </Grid>
-              <Grid item md={2.4}>
-                <Controller
-                  name="fromDate"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      <InputLabel className="inputlabel">
-                        <b>पासून </b>
-                        <span>*</span>
-                      </InputLabel>
-                      <TextField
-                        fullWidth
-                        type="date"
-                        className="textfield"
-                        name="fromDate"
-                        value={dates?.fromDate}
-                        onFocus={(event) => {
-                          event.target.showPicker();
-                        }}
-                        inputProps={{
-                          max: today,
-                          min: "2025-04-04",
-                        }}
-                        error={errors.fromDate}
-                        {...field}
-                        onBlur={() => handleBlur("fromDate")}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleUserDetails(e);
-                        }}
-                        size="small"
-                      />
-                      <FormHelperText sx={{ color: "red" }}>
-                        {errors.fromDate && errors.fromDate.message}
-                      </FormHelperText>
-                    </>
-                  )}
-                />
-              </Grid>
-              <Grid item md={2.4}>
-                <Controller
-                  name="toDate"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      <InputLabel className="inputlabel">
-                        <b>पर्यंत </b>
-                        <span>*</span>
-                      </InputLabel>
-                      <TextField
-                        fullWidth
-                        type="date"
-                        className="textfield"
-                        name="toDate"
-                        value={dates?.toDate}
-                        onFocus={(event) => {
-                          event.target.showPicker();
-                        }}
-                        inputProps={{
-                          max: today,
-                          min: dates?.fromDate,
-                        }}
-                        error={errors.toDate}
-                        {...field}
-                        onBlur={() => handleBlur("toDate")}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleUserDetails(e);
-                        }}
-                        size="small"
-                      />
-                      <FormHelperText sx={{ color: "red" }}>
-                        {errors.toDate && errors.toDate.message}
-                      </FormHelperText>
-                    </>
-                  )}
-                />
-              </Grid>
+                                  {office.officename}
+                                </TableCell>
 
-              {/* {isExcelLoading === null ? null : isExcelLoading ? (
-                <Grid item md={1}>
-                  <InputLabel className="inputlabel">
-                    <b>&nbsp;</b>
-                  </InputLabel>
-                  <CircularProgress size="2rem" />
-                </Grid>
-              ) : (
-                <Grid item md={1}>
-                  <InputLabel className="inputlabel">
-                    <b>&nbsp;</b>
-                  </InputLabel>
-                  <ToolTipBTN title="Download Excel" arrow>
-                    <IconButton color="info" onClick={handleDownloadExcel}>
-                      <ContentPasteGoRoundedIcon />
-                    </IconButton>
-                  </ToolTipBTN>
-                </Grid>
-              )} */}
-            </Grid>
+                                <TableCell align="center">
+                                  {office.totalCreatedApplicationCount}
+                                </TableCell>
 
-            <Grid container spacing={1} justifyContent="center">
-              <Grid item md={1}>
-                <InputLabel className="inputlabel">
-                  <b>&nbsp;</b>
-                </InputLabel>
-                <Button variant="contained" onClick={search}>
-                  Search
-                </Button>
-              </Grid>
-              {/* {isExcelLoading === null ? null : isExcelLoading ? (
-                <Grid item md={1}>
-                  <InputLabel className="inputlabel">
-                    <b>&nbsp;</b>
-                  </InputLabel>
-                  <CircularProgress size="2rem" />    
-                </Grid>
-              ) : (
-                <Grid item md={1}>
-                  <InputLabel className="inputlabel">
-                    <b>&nbsp;</b>
-                  </InputLabel>
-                  <ToolTipBTN title="Download Excel" arrow>
-                    <IconButton color="info" onClick={handleDownloadExcel}>
-                      <ContentPasteGoRoundedIcon />
-                    </IconButton>
-                  </ToolTipBTN>
-                </Grid>
-              )} */}
-            </Grid>
-          </Grid>
-        </Grid>
+                                <TableCell align="center">
+                                  {office.total_inward}
+                                </TableCell>
 
-        {isTableDataLoading === null ? null : isTableDataLoading ? (
-          <Grid item md={12} textAlign="center" mt={2}>
-            <CircularProgress size="2rem" />
-          </Grid>
-        ) : (
-          <Grid item md={12}>
-            <ApplicationTable tableData={tableData} dates={dates} />
-          </Grid>
-        )}
-      </Container>
+                                <TableCell align="center">
+                                  {office.pending_at_ms_inward}
+                                </TableCell>
 
-      <Grid container spacing={4} mt={1} px={4}>
-        <Grid item md={6} xs={12} textAlign="center">
-          {isMutationCountLoading === null ? null : isMutationCountLoading ? (
-            <Paper elevation={2} sx={{ padding: 2 }}>
-              <CircularProgress size="2rem" />
-            </Paper>
-          ) : (
-            <Paper elevation={5} sx={{ padding: 2 }}>
-              {mutationCountData.length == 0 ? (
-                <h2>No Data Found</h2>
-              ) : (
-                <ReactApexChart
-                  options={donutOptions}
-                  series={series}
-                  type="donut"
-                  height={410}
-                />
-              )}
-            </Paper>
-          )}
-        </Grid>
+                                <TableCell align="center">
+                                  {office.pending_at_ctso_inward}
+                                </TableCell>
 
-        <Grid item md={6} xs={12} textAlign="center">
-          {isMutationCountLoading === null ? null : isMutationCountLoading ? (
-            <Paper elevation={2} sx={{ padding: 2 }}>
-              <CircularProgress size="2rem" />
-            </Paper>
-          ) : (
-            <Paper elevation={5} sx={{ padding: 2 }}>
-              {mutationCountData.length == 0 ? (
-                <h2>No Data Found</h2>
-              ) : (
-                <ReactApexChart
-                  options={mutationCountBarOptions}
-                  series={seriesMutationCount}
-                  type="bar"
-                  height={400}
-                />
-              )}
-            </Paper>
-          )}
-        </Grid>
-      </Grid>
+                                <TableCell align="center">
+                                  {office.disposed_inward}
+                                </TableCell>
+                              </TableRow>
+
+                              {expandedOffice === office.officecode && (
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={7}
+                                    sx={{
+                                      p: 2,
+                                      bgcolor: "#f8fafc",
+                                    }}
+                                  >
+                                    {loadingMutation ? (
+                                      <Box
+                                        sx={{
+                                          height: 120,
+                                          display: "flex",
+                                          justifyContent: "center",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <CircularProgress size="2rem" />
+                                      </Box>
+                                    ) : newDashboardData.length > 0 ? (
+                                      <Table size="small">
+                                        <TableHead
+                                          sx={{
+                                            bgcolor: "#E3F2FD",
+                                            "& th": {
+                                              color: "#0D47A1",
+                                              fontWeight: 700,
+                                              fontSize: "13px",
+                                              borderBottom: "2px solid #1976d2",
+                                              textAlign: "center",
+                                            },
+                                          }}
+                                        >
+                                          <TableRow>
+                                            <TableCell />
+                                            <TableCell width={100}>अ.क्र.</TableCell>
+
+                                            <TableCell width={250}>
+                                              फेरफार नाव
+                                            </TableCell>
+
+                                            <TableCell align="center">
+                                              Created Application
+                                            </TableCell>
+
+                                            <TableCell align="center">
+                                              Inward No Generated
+                                            </TableCell>
+
+                                            <TableCell align="center">
+                                              Rejected
+                                            </TableCell>
+
+                                            <TableCell align="center">
+                                              Inward Number Error
+                                            </TableCell>
+                                          </TableRow>
+                                        </TableHead>
+                                        <TableBody sx={{
+                                          "& tr:nth-of-type(even)": {
+                                            bgcolor: "#fafafa",
+                                          },
+
+                                          "& tr:hover": {
+                                            bgcolor: "#E3F2FD",
+                                          },
+
+                                          "& td": {
+                                            textAlign: "center",
+                                            py: 1,
+                                          },
+
+                                          "& td:first-of-type": {
+                                            textAlign: "left",
+                                            fontWeight: 500,
+                                          },
+                                        }}>
+                                          {newDashboardData.map((mutation, index) => {
+                                            const created =
+                                              mutation.Statuses.find(
+                                                (s) =>
+                                                  s.ApplicationStatusCode === 0
+                                              )?.CountOfMutation || 0;
+
+                                            const inward =
+                                              mutation.Statuses.find(
+                                                (s) =>
+                                                  s.ApplicationStatusCode === 10
+                                              )?.CountOfMutation || 0;
+
+                                            const rejected =
+                                              mutation.Statuses.find(
+                                                (s) =>
+                                                  s.ApplicationStatusCode === 12
+                                              )?.CountOfMutation || 0;
+
+                                            const error =
+                                              mutation.Statuses.find(
+                                                (s) =>
+                                                  s.ApplicationStatusCode === 15
+                                              )?.CountOfMutation || 0;
+
+                                            return (
+                                              <TableRow
+                                                key={mutation.MutationName}
+                                                hover
+                                                sx={{
+                                                  "&:nth-of-type(even)": {
+                                                    bgcolor: "#fafafa",
+                                                  },
+                                                }}
+                                              >
+                                                <TableCell />
+
+                                                <TableCell align="center">
+                                                  {index + 1}
+                                                </TableCell>
+
+                                                <TableCell
+                                                  sx={{
+                                                    fontWeight: 500,
+                                                    pl: 2,
+                                                    textAlign: "left",
+                                                  }}
+                                                >
+                                                  {mutation.MutationName}
+                                                </TableCell>
+
+                                                <TableCell align="center">
+                                                  {created}
+                                                </TableCell>
+
+                                                <TableCell align="center">
+                                                  {inward}
+                                                </TableCell>
+
+                                                <TableCell align="center">
+                                                  {rejected}
+                                                </TableCell>
+
+                                                <TableCell align="center">
+                                                  {error}
+                                                </TableCell>
+                                              </TableRow>
+                                            );
+                                          })}
+                                        </TableBody>
+                                      </Table>
+                                    ) : (
+                                      <Box
+                                        sx={{
+                                          height: 70,
+                                          display: "flex",
+                                          justifyContent: "center",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        No Application Found For Any Mutation
+                                      </Box>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </React.Fragment>
+                          ))}
+                      </React.Fragment>
+                    ))}
+                </React.Fragment>
+              ))
+            )}
+            {!loadingDivision && divisionData.length > 0 && (
+              <TableRow
+                sx={{
+                  bgcolor: "#FFF8E1",
+
+                  "& td": {
+                    fontWeight: 700,
+                    borderTop: "3px solid #1565C0",
+                    fontSize: "15px",
+                  },
+                }}
+              >
+                <TableCell />
+
+                <TableCell align="center">
+                  <b>एकूण (Total)</b>
+                </TableCell>
+
+                <TableCell align="center">
+                  {divisionTotals.created}
+                </TableCell>
+
+                <TableCell align="center">
+                  {divisionTotals.inward}
+                </TableCell>
+
+                <TableCell align="center">
+                  {divisionTotals.pendingMS}
+                </TableCell>
+
+                <TableCell align="center">
+                  {divisionTotals.pendingCTSO}
+                </TableCell>
+
+                <TableCell align="center">
+                  {divisionTotals.disposed}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </>
   );
 };
 
-export default UserDashboard;
+export default Dashboard;

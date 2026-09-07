@@ -89,6 +89,7 @@ const UserAddress = ({
                   "गहाणखत / तारण / बोजा घेणाराचा पत्ता"}
                 {type == "hakksodDenar" && "हक्कसोड देणाऱ्याचा पत्ता"}
                 {type == "hakksodGhenar" && "हक्कसोड घेणाऱ्याचा पत्ता"}
+                {type == "chukDurusti" && "चूक दुरुस्ती करण्याराचा पत्ता"}
               </h4>
             </Grid>
             {/* {showSameAddFields && (

@@ -55,6 +55,7 @@ const ApplicationTYpe = () => {
   const [selectedDocs, setSelectedDocs] = useState([]);
   const [showDocs, setShowDocs] = useState(false);
   const [dropdownMutations, setDropdownMutations] = useState([]);
+  // console.log("dropdownMutations", dropdownMutations)
   const [selectedMutation, setSelectedMutation] = useState({});
   const [isPOA, setIsPOA] = useState("");
   const [isCourt, setIsCourt] = useState("");
@@ -523,9 +524,20 @@ const ApplicationTYpe = () => {
                           // dropdownMutations.map((val, i) => (
                           dropdownMutations
                             .filter((val) =>
-                              ["01", "03", "06","05","20", "04", "09","10"].includes(
-                                // with हीबानामा
-                                // ["01", "03", "06", "04", "09", "23"].includes(
+                              ["01", //वारस नोंद
+                                // //"02", //मयताचे नाव कमी करणे
+                                "03",
+                                "06",
+                                "05", //मृत्युपत्र / इच्छापत्र नोंद
+                                "20", //ए.कू.मॅ. नोंद कमी करणे
+                                "04",
+                                "09",
+                                "10",
+                                "23", //हिबानामा register/unregister
+                                "31",//'नावात बदल'
+                                "30", //चुकदुरुस्ती नोंद
+                                "08", //वाटणीपत्र/वाटप नोंद
+                              ].includes(
                                 val?.mutation_code
                               )
                             )

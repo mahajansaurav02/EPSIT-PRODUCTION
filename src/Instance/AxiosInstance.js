@@ -9,6 +9,22 @@ const AxiosInstance = () => {
   const navigate = useNavigate();
   const token = sessionStorage.getItem("token");
   const role = sessionStorage.getItem("role");
+
+  // // Full URL
+  // console.log("Full URL->", window.location.href);
+
+  // // Hostname (e.g., "example.com")
+  // console.log("Hostname->", window.location.hostname);
+
+  // // Protocol (e.g., "https:")
+  // console.log("Protocol->", window.location.protocol);
+
+  // // Port (e.g., "3000")
+  // console.log("Port->", window.location.port);
+
+  // // Host (hostname + port, e.g., "example.com:3000")
+  // console.log("Host->", window.location.host);
+
   // const reqHeaders = {
   //   "Content-Type": "application/json",
   //   "Access-Control-Allow-Origin": "*",
@@ -17,6 +33,7 @@ const AxiosInstance = () => {
   // };
   const reqHeaders = {
     "Content-Type": "application/json",
+    // "Access-Control-Allow-Origin": `${window.location.hostname}`,
     "Access-Control-Allow-Origin": "*",
     "Content-Security-Policy": "default-src 'self'; base-uri 'self'",
     "X-Content-Type-Options": "nosniff",
@@ -40,7 +57,7 @@ const AxiosInstance = () => {
     return encryptedData;
   };
 
-  const decryptData = (encryptedData, base64Key, base64IV,url) => {
+  const decryptData = (encryptedData, base64Key, base64IV, url) => {
     try {
       const key = forge.util.decode64(base64Key);
       const iv = forge.util.decode64(base64IV);
@@ -80,8 +97,8 @@ const AxiosInstance = () => {
             }
           );
         }
+        console.log(`API=${url}`, data)
 
-        console.log(data,"check dataaa",url)
         return data;
       } else {
         throw new Error("Decryption failed");
@@ -94,9 +111,8 @@ const AxiosInstance = () => {
 
   const sendRequest = useCallback(
     async (url, type = "GET", reqData, callback, errorCallback) => {
+      console.log(`RequestData for ${url}`, type, reqData);
       if (type === "POST") {
-
-        console.log(reqData, "check req dataaa==============");
         await axios
           .post(
             url,
@@ -116,7 +132,7 @@ const AxiosInstance = () => {
               decryptData(
                 response?.data,
                 "6XhX8NxtWrlC/NbK3GXoh3TtH9UUt8KmgcuUG0RFEJM=",
-                "t0tOwviXTieE5SZoh9/hzw==",url
+                "t0tOwviXTieE5SZoh9/hzw==", url
               )
             );
           })
@@ -144,31 +160,29 @@ const AxiosInstance = () => {
               "6XhX8NxtWrlC/NbK3GXoh3TtH9UUt8KmgcuUG0RFEJM=",
               "t0tOwviXTieE5SZoh9/hzw=="
             ),
-            // reqData,
-
             {
               headers: reqHeaders,
             }
           )
           .then((response) => {
-            // console.info("response->>", response?.data);
-            callback(
+            callback?.(
               decryptData(
                 response?.data,
                 "6XhX8NxtWrlC/NbK3GXoh3TtH9UUt8KmgcuUG0RFEJM=",
-                "t0tOwviXTieE5SZoh9/hzw=="
+                "t0tOwviXTieE5SZoh9/hzw==",
+                url
               )
             );
           })
-          // .then((response) => {
-          //   callback(response);
-          // })
           .catch((error) => {
-            console.log(error);
+            console.error(`PUT Error API=${url}`, error);
+
             if (errorCallback) {
-              errorCallback(error.response);
+              errorCallback(error.response?.data || error);
             }
-            if (error?.response?.status == 401) {
+
+            if (error?.response?.status === 401) {
+              sessionStorage.clear();
               navigate("/");
             }
           });
@@ -183,7 +197,7 @@ const AxiosInstance = () => {
               decryptData(
                 response?.data,
                 "6XhX8NxtWrlC/NbK3GXoh3TtH9UUt8KmgcuUG0RFEJM=",
-                "t0tOwviXTieE5SZoh9/hzw=="
+                "t0tOwviXTieE5SZoh9/hzw==", url
               )
             );
           })
@@ -213,7 +227,7 @@ const AxiosInstance = () => {
               decryptData(
                 response?.data,
                 "6XhX8NxtWrlC/NbK3GXoh3TtH9UUt8KmgcuUG0RFEJM=",
-                "t0tOwviXTieE5SZoh9/hzw=="
+                "t0tOwviXTieE5SZoh9/hzw==", url
               )
             );
           })

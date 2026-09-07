@@ -37,6 +37,12 @@ const HakkaSodPatraReleaseDidNond = lazy(() =>
     "./FerfarType/Registered/HakkaSodPatraReleaseDidNond/HakkaSodPatraReleaseDidNond"
   )
 );
+const ChukDurustiNond = lazy(
+  () => import("./FerfarType/Registered/ChukDurustiNond/ChukDurustiNond"),
+);
+const VatniPatraNond = lazy(
+  () => import("./FerfarType/Registered/VatniPatraNond/VatniPatraNond"),
+);
 //--------------UnRegistered-----------------------
 const VarasNond = lazy(() =>
   import("./FerfarType/UnRegistered/VarasNond/VarasNond")
@@ -54,6 +60,19 @@ const MryutuPatraIcchaPatraNondUnRegistered = lazy(() =>
   import(
     "./FerfarType/UnRegistered/MryutupatraIcchaPatraNond/MryutuPatraIcchaPatraNondUnRegistered"
   )
+);
+const NavatBadalNond = lazy(
+  () => import("./FerfarType/UnRegistered/NavatBadalNond/NavatBadalNond"),
+);
+
+//-------------------------------Generic-------------
+const GenericMutation = lazy(
+  () => import("./FerfarType/Generic/GenericMutation"),
+);
+
+//----------------------------New Generic-------------
+const NewGenericMutation = lazy(
+  () => import("./FerfarType/NewGeneric/NewGenericMutation"),
 );
 
 const Ferfar = () => {
@@ -208,8 +227,24 @@ const Ferfar = () => {
             )}
             {applicationData?.mutation_type_code == "10" && (
               <BhadePattaNond applicationData={applicationData} />
-            )}            {applicationData?.mutation_type_code == "09" && (
+            )}
+            {applicationData?.mutation_type_code == "09" && (
               <HakkaSodPatraReleaseDidNond applicationData={applicationData} />
+            )}
+            {applicationData.mutation_type_code == "23" && (
+              <NewGenericMutation
+                applicationData={applicationData}
+                setDisableShowNextBtn={setDisableShowNextBtn}
+              />
+            )}
+            {applicationData.mutation_type_code == "30" && (
+              <ChukDurustiNond applicationData={applicationData} />
+            )}
+            {applicationData.mutation_type_code == "08" && (
+              <VatniPatraNond
+                applicationData={applicationData}
+                setDisableShowNextBtn={setDisableShowNextBtn}
+              />
             )}
           </>
         ) : (
@@ -229,6 +264,15 @@ const Ferfar = () => {
               "ए.कू.मॅ. नोंद कमी करणे" && <EeKuMyaNondkamiKarne />}
             {reduxState?.mutationType?.mutationTypeName == "हिबानामा" && (
               <HibaNama />
+            )}
+            {applicationData.mutation_type_code == "23" && (
+              <NewGenericMutation
+                applicationData={applicationData}
+                setDisableShowNextBtn={setDisableShowNextBtn}
+              />
+            )}
+            {applicationData.mutation_type_code == "31" && (
+              <NavatBadalNond applicationData={applicationData} />
             )}
           </>
         )}
