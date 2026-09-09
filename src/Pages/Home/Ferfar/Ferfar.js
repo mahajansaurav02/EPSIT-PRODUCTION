@@ -231,7 +231,8 @@ const Ferfar = () => {
             {applicationData?.mutation_type_code == "09" && (
               <HakkaSodPatraReleaseDidNond applicationData={applicationData} />
             )}
-            {applicationData.mutation_type_code == "23" && (
+            {/* registered हिबानामा */}
+            {/* {applicationData.mutation_type_code == "23" && (
               <NewGenericMutation
                 applicationData={applicationData}
                 setDisableShowNextBtn={setDisableShowNextBtn}
@@ -245,7 +246,7 @@ const Ferfar = () => {
                 applicationData={applicationData}
                 setDisableShowNextBtn={setDisableShowNextBtn}
               />
-            )}
+            )} */}
           </>
         ) : (
           <>
@@ -265,7 +266,8 @@ const Ferfar = () => {
             {reduxState?.mutationType?.mutationTypeName == "हिबानामा" && (
               <HibaNama />
             )}
-            {applicationData.mutation_type_code == "23" && (
+            {/* unregistered हिबानामा */}
+            {/* {applicationData.mutation_type_code == "23" && (
               <NewGenericMutation
                 applicationData={applicationData}
                 setDisableShowNextBtn={setDisableShowNextBtn}
@@ -273,7 +275,7 @@ const Ferfar = () => {
             )}
             {applicationData.mutation_type_code == "31" && (
               <NavatBadalNond applicationData={applicationData} />
-            )}
+            )} */}
           </>
         )}
 

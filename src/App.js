@@ -30,6 +30,7 @@ const Dashboard = lazy(
 
 const Login = lazy(() => import("./Pages/Login/Login"));
 const OpenDashboard = lazy(() => import("./Pages/OpenDashboard/OpenDashboard"));
+const TestDashboard = lazy(() => import("./Pages/OpenDashboard/TestDashboard"));
 const UserManualAndFAQ = lazy(() => import("./Pages/FAQ/UserManualAndFAQ"));
 const UnderMaintain = lazy(() => import("./Pages/Login/UnderMaintain"));
 const Home = lazy(() => import("./Pages/Home/Home"));
@@ -73,7 +74,7 @@ function App() {
     return loggedUser && role ? children : <Navigate to="/admin_login" />;
   };
 
- useEffect(() => {
+  useEffect(() => {
     const allowedDomains = [
       // "localhost",
       // "115.124.105.111",
@@ -99,6 +100,8 @@ function App() {
               {/* <Route path="/" element={<Navigate to="/login" />} />
               <Route path="/login" element={<UnderMaintain />} />
               <Route path="/login2" element={<Login />} /> */}
+
+              <Route path="/testdashboard" element={<TestDashboard />} />
 
               {/*----------------------------------Actual Route------------------------------------*/}
 
